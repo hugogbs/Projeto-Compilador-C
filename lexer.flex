@@ -43,6 +43,12 @@ Any            = . | \n
   	">"  { return makeSymbol(cminor.parser.Symbol.GT); }
   	"="  { return makeSymbol(cminor.parser.Symbol.ASSIGN); }
 
+    /* String literal */
+    \" { yybegin(STRINGLITERAL); stringBuffer.setLength(0); }
+
+    /* Character literal */
+    \' { yybegin(CHARLITERAL); stringBuffer.setLength(0); }
+
 	/* Whitespace */
 	{WhiteSpace} { /* ignore */ }
 
@@ -53,4 +59,25 @@ Any            = . | \n
 
 	/* Any other illegal character. */
 	{Any} { return makeErrorToken("stray " + charName()); }
+}
+
+<STRINGLITERAL> {
+
+	/* End of string literal */
+	\"            { yybegin(YYINITIAL); return new Symbol(cminor.parser.Symbol.STRING_LITERAL, stringBuffer.toString()); }
+
+	/* Escape sequences */
+	\\n           { stringBuffer.append('\n'); Symbol err = checkStringLiteralLength(); if(err != null) return err; }
+	\\0           { stringBuffer.append('\0'); Symbol err = checkStringLiteralLength(); if(err != null) return err; }
+	\\{Printable} { stringBuffer.append(getLastChar()); Symbol err = checkStringLiteralLength(); if(err != null) return err; }
+
+	/* Legal unescaped characters */
+	{Printable}   { stringBuffer.append(getLastChar()); Symbol err = checkStringLiteralLength(); if(err != null) return err; }
+
+	/* Stray newline */
+	{LineTerminator} { yybegin(YYINITIAL); return makeErrorToken("missing closing quote for string literal"); }
+
+	/* Other, illegal characters */
+	{Any}         { yybegin(STRING_RECOVER); return makeErrorToken("illegal " + charName() + " in string literal"); }
+
 }
