@@ -1,4 +1,3 @@
-
 LineTerminator = \r|\n|\r\n
 Identifier     = [A-Za-z_][A-Za-z_0-9]*
 Integer        = [0-9]+
@@ -11,6 +10,41 @@ Any            = . | \n
 
 
 <YYINITIAL> {
+
+  /* Keywords */
+  "auto"    { return makeSymbol(cminor.parser.Symbol.AUTO); }
+  "double"  { return makeSymbol(cminor.parser.Symbol.DOUBLE); }
+  "int" { return makeSymbol(cminor.parser.Symbol.INT); }
+  "struct"    { return makeSymbol(cminor.parser.Symbol.STRUCT); }
+  "const" { return makeSymbol(cminor.parser.Symbol.CONST); }
+  "float"     { return makeSymbol(cminor.parser.Symbol.INT); }
+  "short"    { return makeSymbol(cminor.parser.Symbol.SHORT); }
+  "unsigned"  { return makeSymbol(cminor.parser.Symbol.UNSIGN); }
+  "break" { return makeSymbol(cminor.parser.Symbol.BREAK); }
+  "else"  { return makeSymbol(cminor.parser.Symbol.ELSE); }
+  "long" { return makeSymbol(cminor.parser.Symbol.LONG); }
+  "switch"  { return makeSymbol(cminor.parser.Symbol.SWITCH); }
+  "continue"    { return makeSymbol(cminor.parser.Symbol.CONTINUE); }
+  "for"  { return makeSymbol(cminor.parser.Symbol.FOR); }
+  "signed" { return makeSymbol(cminor.parser.Symbol.SIGNED); }
+  "void"    { return makeSymbol(cminor.parser.Symbol.VOID); }
+  "case" { return makeSymbol(cminor.parser.Symbol.CASE); }
+  "enum"     { return makeSymbol(cminor.parser.Symbol.ENUM); }
+  "register"    { return makeSymbol(cminor.parser.Symbol.REGISTER); }
+  "typedef"    { return makeSymbol(cminor.parser.Symbol.TYPEDEF); }
+  "default"  { return makeSymbol(cminor.parser.Symbol.DEFAULT); }
+  "goto" { return makeSymbol(cminor.parser.Symbol.GOTO); }
+  "sizeof"  { return makeSymbol(cminor.parser.Symbol.SIZEOF); }
+  "volatile" { return makeSymbol(cminor.parser.Symbol.VOLATILE); }
+  "char"  { return makeSymbol(cminor.parser.Symbol.CHAR); }
+  "extern"    { return makeSymbol(cminor.parser.Symbol.EXTERN); }
+  "return"  { return makeSymbol(cminor.parser.Symbol.RETURN); }
+  "union" { return makeSymbol(cminor.parser.Symbol.UNION); }
+  "do"    { return makeSymbol(cminor.parser.Symbol.DO); }
+  "if" { return makeSymbol(cminor.parser.Symbol.IF); }
+  "static"     { return makeSymbol(cminor.parser.Symbol.STATIC); }
+  "while"    { return makeSymbol(cminor.parser.Symbol.WHILE); }
+
   /* Identifiers */
   {Identifier} { return makeSymbol(cminor.parser.Symbol.IDENTIFIER, getIdentifierString()); }
 
