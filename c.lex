@@ -56,6 +56,8 @@ program = "program"
 
 \"([^\\\"]|\\.)*\" { return createToken("String", yytext()); }
 
+\'([^\\\"]|\\.)*\' { return createToken("Char", yytext()); }
+
 /* Whitespace */
 {WhiteSpace} { /**/ }
 
