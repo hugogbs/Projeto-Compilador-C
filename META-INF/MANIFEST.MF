@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Package: jflex
+Archiver-Version: Plexus Archiver
+Built-By: kleing
+Created-By: Apache Maven 3.2.3
+Build-Jdk: 1.8.0_40
+Main-Class: jflex.Main
+
