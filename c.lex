@@ -27,13 +27,13 @@ Octal          = "-"?0[0-9]+
 Hexadecimal    = "-"?0x[0-9]+
 
 Separator      = "("|")"|"{"|"}"|"["|"]"|","|";"
-Operator       = "+"|"-"|"*"|"/"|"%"|"!"|"&&"|"||"|"=="|"!="|"<="|"<"|">="|">"|"="|"+="|"-="|"*="|"/="|"%="|"&="|"^="|"&"|"|"|"~"|"^"|"<<"|">>"
+Operator       = "+"|"-"|"*"|"/"|"%"|"!"|"&&"|"||"|"=="|"!="|"<="|"<"|">="|">"|"="|"+="|"-="|"*="|"/="|"%="|"&="|"^="|"&"|"|"|"~"|"^"|"<<"|">>"|"++"|"--"
 
 Comments = {LineComment} | {BlockComment}
 LineComment = "//" {InputCharacter}* {LineTerminator}?
 BlockComment = "/*" [^*] ~"*/" | "/*" "*"+ "/"
 
-WhiteSpace     = {LineTerminator} | [ \t\f]
+WhiteSpace     = {LineTerminator} | [ \t\f  ]
 
 Printable      = [ -~]
 
