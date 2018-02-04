@@ -5,9 +5,11 @@ init with {: scanner.init();              :};
 scan with {: return scanner.next_token(); :};
 
 /* Terminals (tokens returned by the scanner). */
-terminal            SEMI, PLUS, MINUS, TIMES, DIVIDE, MOD;
-terminal            UMINUS, LPAREN, RPAREN;
-terminal Integer    NUMBER;
+terminal    LPAREN, RPAREN, LBRACE, RBRACE, LBRACKET, RBRACKET, COMMA, SEMI;
+terminal    ADD, SUB, STAR, DIV, NOT, AND, OR, EQ, NE, LE, LT, GE, GT, ASSIGN;
+terminal    AUTO, DOUBLE, INT, STRUCT, CONST, SHORT, UNSIGN, BREAK, ELSE, LONG, SWITCH, CONTINUE, FOR, SIGNED, VOID, CASE,
+            ENUM, REGISTER, TYPEDEF, DEFAULT, GOTO, SIZEOF, VOLATILE, CHAR, EXTERN, RETURN, UNION, DO, IF, STATIC, WHILE;
+terminal    IDENTIFIER, INT_LITERAL, STRINGLITERAL, CHARLITERAL;
 
 /* Non terminals */
 non terminal            expr_list, expr_part;
