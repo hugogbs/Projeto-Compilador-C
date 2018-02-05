@@ -77,6 +77,35 @@ Any            = . | \n
   	">"  { return makeSymbol(cminor.parser.Symbol.GT); }
   	"="  { return makeSymbol(cminor.parser.Symbol.ASSIGN); }
 
+    /* Novos símbolos */
+    "."       { return makeSymbol(cminor.parser.Symbol.POINT); }
+    "&"       { return makeSymbol(cminor.parser.Symbol.BIT_AND); }
+    "..."			{ return makeSymbol(cminor.parser.Symbol.ELLIPSIS); }
+    ">>="			{ return makeSymbol(cminor.parser.Symbol.RIGHT_ASSIGN); }
+    "<<="			{ return makeSymbol(cminor.parser.Symbol.LEFT_ASSIGN); }
+    "+="			{ return makeSymbol(cminor.parser.Symbol.ADD_ASSIGN); }
+    "-="			{ return makeSymbol(cminor.parser.Symbol.SUB_ASSIGN); }
+    "*="			{ return makeSymbol(cminor.parser.Symbol.MUL_ASSIGN); }
+    "/="			{ return makeSymbol(cminor.parser.Symbol.DIV_ASSIGN); }
+    "%="			{ return makeSymbol(cminor.parser.Symbol.MOD_ASSIGN); }
+    "&="			{ return makeSymbol(cminor.parser.Symbol.AND_ASSIGN); }
+    "^="			{ return makeSymbol(cminor.parser.Symbol.XOR_ASSIGN); }
+    "|="			{ return makeSymbol(cminor.parser.Symbol.OR_ASSIGN); }
+    ">>"			{ return makeSymbol(cminor.parser.Symbol.RIGHT_OP); }
+    "<<"			{ return makeSymbol(cminor.parser.Symbol.LEFT_OP); }
+    "++"			{ return makeSymbol(cminor.parser.Symbol.INC_OP); }
+    "--"			{ return makeSymbol(cminor.parser.Symbol.DEC_OP); }
+    "->"			{ return makeSymbol(cminor.parser.Symbol.PTR_OP); }
+    "."	 		 { return makeSymbol(cminor.parser.Symbol.DOT); }
+    "&"			 { return makeSymbol(cminor.parser.Symbol.BIT_AND); }
+    "!"			 { return makeSymbol(cminor.parser.Symbol.NOT); }
+    "~"			 { return makeSymbol(cminor.parser.Symbol.COMP); }
+    "%"			 { return makeSymbol(cminor.parser.Symbol.MOD); }
+    "^"			 { return makeSymbol(cminor.parser.Symbol.XOR); }
+    "|"			 { return makeSymbol(cminor.parser.Symbol.BIT_OR); }
+    "?"			 { return makeSymbol(cminor.parser.Symbol.QUESTION); }
+    ":"			 { return makeSymbol(cminor.parser.Symbol.COLON); }
+
     /* String literal */
     \" { yybegin(STRINGLITERAL); stringBuffer.setLength(0); }
 
