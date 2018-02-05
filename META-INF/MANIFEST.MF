@@ -1,8 +1,7 @@
 Manifest-Version: 1.0
-Package: jflex
-Archiver-Version: Plexus Archiver
-Built-By: kleing
-Created-By: Apache Maven 3.2.3
-Build-Jdk: 1.8.0_40
-Main-Class: jflex.Main
+Ant-Version: Apache Ant 1.9.6
+Created-By: 1.8.0_91-8u91-b14-0ubuntu4~16.04.1-b14 (Oracle Corporation
+ )
+Main-Class: java_cup/Main
+Class-Path: java-cup-11b-runtime.jar
 
