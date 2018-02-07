@@ -1,6 +1,9 @@
 import java.io.*;
+import java_cup.runtime.ComplexSymbolFactory.ComplexSymbol;
+import java_cup.runtime.ComplexSymbolFactory.Location;
+import java_cup.runtime.ComplexSymbolFactory;
+import java_cup.runtime.Symbol;
 import java.util.*;
-import java_cup.runtime.*;
 
 %%
 %public
