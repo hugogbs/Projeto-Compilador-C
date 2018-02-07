@@ -94,7 +94,7 @@ terminal	CASE, DEFAULT, IF, ELSE, SWITCH, WHILE, DO, FOR, GOTO, CONTINUE, BREAK,
 
 terminal	ALIGNAS, ALIGNOF, ATOMIC, GENERIC, NORETURN, STATIC_ASSERT, THREAD_LOCAL;
 
-non terminal primary_expression, constant,enumeration_constant, string, generic_selection, generic_assoc_list, generic_association;
+non terminal translation_unit, primary_expression, constant,enumeration_constant, string, generic_selection, generic_assoc_list, generic_association;
 non terminal postfix_expression, argument_expression_list, unary_expression, unary_operator, cast_expression, multiplicative_expression, additive_expression, shift_expression;
 non terminal relational_expression, equality_expression, and_expression, exclusive_or_expression, inclusive_or_expression, logical_and_expression, logical_or_expression, conditional_expression;
 non terminal assignment_expression, assignment_operator, expression, constant_expression, declaration, declaration_specifiers, init_declarator_list, init_declarator, storage_class_specifier, type_specifier;
@@ -106,7 +106,7 @@ non terminal expression_statement, selection_statement, iteration_statement, jum
 
 precedence nonassoc ELSE;
 
-start with primary_expression;
+start with translation_unit;
 
 primary_expression ::= IDENTIFIER | constant | string | LPAREN expression RPAREN | generic_selection;
 
@@ -266,7 +266,13 @@ constant_expression
 
 declaration
 	::= declaration_specifiers SEMICOLON
-	| declaration_specifiers init_declarator_list SEMICOLON
+	| declaration_specifiers init_declarator_list {:
+	  if (declaration_specifiers.toString().indexOf(">typedef<")>0) {
+	      for (XMLElement e:
+          ((XMLElement)init_declarator_list).selectById("identifier"))
+		        Parser.addType(((Terminal)e).value().toString());
+	  }
+	  :} SEMICOLON
 	| static_assert_declaration
 	;
 
@@ -524,7 +530,7 @@ static_assert_declaration
 
 statement
 	::= labeled_statement
-	| compound_statement
+	| {: Parser.newScope(); :} compound_statement {: Parser.deleteScope(); :}
 	| expression_statement
 	| selection_statement
 	| iteration_statement
@@ -590,10 +596,16 @@ external_declaration
 	| declaration
 	;
 
-function_definition
-	::= declaration_specifiers declarator declaration_list compound_statement
-	| declaration_specifiers declarator compound_statement
-	;
+function_definition ::=declaration_specifiers declarator declaration_list
+  		    				                          {: Parser.newScope(); :}
+    compound_statement		                  {: Parser.deleteScope(); :}
+  	| declaration_specifiers declarator 	  {: Parser.newScope(); :}
+  	  compound_statement 	                  {: Parser.deleteScope(); :}
+  	| declarator declaration_list 	        {: Parser.newScope(); :}
+  	  compound_statement	                  {: Parser.deleteScope(); :}
+  	| declarator                            {: Parser.newScope(); :}
+  	  compound_statement 	                  {: Parser.deleteScope(); :}
+  	;
 
 declaration_list
 	::= declaration
