@@ -1,8 +1,68 @@
-import java_cup.runtime.*;
-import java.util.*;
 import java.io.*;
+import java.util.*;
+import java_cup.runtime.*;
+import java_cup.runtime.XMLElement.*;
+import javax.xml.stream.*;
+import javax.xml.transform.*;
+import javax.xml.transform.stream.*;
 
 parser code {:
+    public void syntax_error(Symbol cur_token){
+  	   System.err.println("Syntax error at "+cur_token);
+    }
+
+    public static void newScope(){
+	     typenames.push(new HashSet<String>());
+    }
+
+    public static void deleteScope(){
+	     typenames.pop();
+    }
+
+    public static boolean lookupType(String name){
+    	for (HashSet<String> scope: typenames)
+    	    if (scope.contains(name)) return true;
+	    return false;
+    }
+
+    public static void addType(String name){
+	     typenames.peek().add(name);
+    }
+
+    public static LinkedList<HashSet<String>> typenames =
+      new LinkedList<HashSet<String>>();
+
+    public Parser(Lexer lex, ComplexSymbolFactory sf) {
+	     super(lex,sf);
+    }
+    public static void main(String args[]) {
+    	try {
+    	    ComplexSymbolFactory csf = new ComplexSymbolFactory();
+    	    // create a buffering scanner wrapper
+    	    ScannerBuffer lexer = new ScannerBuffer(new Lexer(new BufferedReader(new FileReader(args[0])),csf));
+    	    // start parsing
+    	    Parser p = new Parser(lexer,csf);
+    	    System.out.println("Parser runs: ");
+    	    newScope();
+    	    XMLElement e = (XMLElement) p.parse().value;
+    	    // create XML output file
+    	    XMLOutputFactory outFactory = XMLOutputFactory.newInstance();
+    	    XMLStreamWriter sw = outFactory.createXMLStreamWriter(new FileOutputStream(args[1]));
+    	    // dump XML output to the file
+    	    XMLElement.dump(lexer,sw,e); //,"expr","stmt");
+    	    // transform the parse tree into an AST and a rendered HTML version
+    	    Transformer transformer = TransformerFactory.newInstance()
+    		.newTransformer(new StreamSource(new File("tree.xsl")));
+    	    Source text = new StreamSource(new File(args[1]));
+    	    transformer.transform(text, new StreamResult(new File("output.html")));
+
+    	    System.out.println("Parsing finished!");
+    	} catch (Exception e) {
+    	    e.printStackTrace();
+    	}
+    }
+
+
 
     public void report_error(String message, Object info)  {
         System.out.println("Warning - " + message);
@@ -43,6 +103,8 @@ non terminal enum_specifier, enumerator_list, enumerator, atomic_type_specifier,
 non terminal pointer, type_qualifier_list, parameter_type_list, parameter_list, parameter_declaration, identifier_list, type_name, abstract_declarator, direct_abstract_declarator;
 non terminal initializer, initializer_list, designation, designator_list, designator, static_assert_declaration, statement, labeled_statement, compound_statement, block_item_list, block_item;
 non terminal expression_statement, selection_statement, iteration_statement, jump_statement, translation_unit, external_declaration, function_definition, declaration_list;
+
+precedence nonassoc ELSE;
 
 start with primary_expression;
 
