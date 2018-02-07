@@ -37,7 +37,7 @@ import java.util.*;
 
   private int typecheck(String s){
   	if (Parser.lookupType(s.trim())) {
-  	    return TYPE_NAME;
+  	    return TYPEDEF_NAME;
   	}
   	else {
   	    return IDENTIFIER;

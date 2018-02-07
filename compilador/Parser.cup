@@ -266,10 +266,10 @@ constant_expression
 
 declaration
 	::= declaration_specifiers SEMICOLON
-	| declaration_specifiers init_declarator_list {:
-	  if (declaration_specifiers.toString().indexOf(">typedef<")>0) {
+	| declaration_specifiers:ds init_declarator_list:idl {:
+	  if (ds.toString().indexOf(">typedef<")>0) {
 	      for (XMLElement e:
-          ((XMLElement)init_declarator_list).selectById("identifier"))
+          ((XMLElement)idl).selectById("identifier"))
 		        Parser.addType(((Terminal)e).value().toString());
 	  }
 	  :} SEMICOLON
