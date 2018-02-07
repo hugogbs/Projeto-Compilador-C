@@ -1,0 +1,613 @@
+import java.io.*;
+import java.util.*;
+import java_cup.runtime.*;
+import java_cup.runtime.XMLElement.*;
+import javax.xml.stream.*;
+import javax.xml.transform.*;
+import javax.xml.transform.stream.*;
+
+parser code {:
+    public void syntax_error(Symbol cur_token){
+  	   System.err.println("Syntax error at "+cur_token);
+    }
+
+    public static void newScope(){
+	     typenames.push(new HashSet<String>());
+    }
+
+    public static void deleteScope(){
+	     typenames.pop();
+    }
+
+    public static boolean lookupType(String name){
+    	for (HashSet<String> scope: typenames)
+    	    if (scope.contains(name)) return true;
+	    return false;
+    }
+
+    public static void addType(String name){
+	     typenames.peek().add(name);
+    }
+
+    public static LinkedList<HashSet<String>> typenames =
+      new LinkedList<HashSet<String>>();
+
+    public Parser(Lexer lex, ComplexSymbolFactory sf) {
+	     super(lex,sf);
+    }
+    public static void main(String args[]) {
+    	try {
+    	    ComplexSymbolFactory csf = new ComplexSymbolFactory();
+    	    // create a buffering scanner wrapper
+    	    ScannerBuffer lexer = new ScannerBuffer(new Lexer(new BufferedReader(new FileReader(args[0])),csf));
+    	    // start parsing
+    	    Parser p = new Parser(lexer,csf);
+    	    System.out.println("Parser runs: ");
+    	    newScope();
+    	    XMLElement e = (XMLElement) p.parse().value;
+    	    // create XML output file
+    	    XMLOutputFactory outFactory = XMLOutputFactory.newInstance();
+    	    XMLStreamWriter sw = outFactory.createXMLStreamWriter(new FileOutputStream(args[1]));
+    	    // dump XML output to the file
+    	    XMLElement.dump(lexer,sw,e); //,"expr","stmt");
+    	    // transform the parse tree into an AST and a rendered HTML version
+    	    Transformer transformer = TransformerFactory.newInstance()
+    		.newTransformer(new StreamSource(new File("tree.xsl")));
+    	    Source text = new StreamSource(new File(args[1]));
+    	    transformer.transform(text, new StreamResult(new File("output.html")));
+
+    	    System.out.println("Parsing finished!");
+    	} catch (Exception e) {
+    	    e.printStackTrace();
+    	}
+    }
+
+
+
+    public void report_error(String message, Object info)  {
+        System.out.println("Warning - " + message);
+    }
+
+    public void report_fatal_error(String message, Object info)  {
+        System.out.println("Error - " + message);
+        System.exit(-1);
+    }
+
+:};
+
+terminal	IDENTIFIER, I_CONSTANT, F_CONSTANT, STRING_LITERAL, FUNC_NAME, SIZEOF;
+terminal	PTR_OP, INC_OP, DEC_OP, LEFT_OP, RIGHT_OP, LE_OP, GE_OP, EQ_OP, NE_OP;
+terminal	AND_OP, OR_OP, MUL_ASSIGN, DIV_ASSIGN, MOD_ASSIGN, ADD_ASSIGN;
+terminal	SUB_ASSIGN, LEFT_ASSIGN, RIGHT_ASSIGN, AND_ASSIGN;
+terminal	XOR_ASSIGN, OR_ASSIGN;
+terminal	TYPEDEF_NAME, ENUMERATION_CONSTANT;
+
+terminal	TYPEDEF, EXTERN, STATIC, AUTO, REGISTER, INLINE;
+terminal	CONST, RESTRICT, VOLATILE;
+terminal	BOOL, CHAR, SHORT, INT, LONG, SIGNED, UNSIGNED, FLOAT, DOUBLE, VOID;
+terminal	COMPLEX, IMAGINARY;
+terminal	STRUCT, UNION, ENUM, ELLIPSIS;
+
+terminal LT, GT, AND, PIPE, DOT, DDOT, TIL, CARET, EQUALS, INTER, LPAREN, RPAREN, COMMA, PLUS, MINUS, LBRA, RBRA, LKEY, RKEY, SEMICOLON, STAR, BAR, PERC, EXCLA;
+
+terminal	CASE, DEFAULT, IF, ELSE, SWITCH, WHILE, DO, FOR, GOTO, CONTINUE, BREAK, RETURN;
+
+terminal	ALIGNAS, ALIGNOF, ATOMIC, GENERIC, NORETURN, STATIC_ASSERT, THREAD_LOCAL;
+
+non terminal primary_expression, constant,enumeration_constant, string, generic_selection, generic_assoc_list, generic_association;
+non terminal postfix_expression, argument_expression_list, unary_expression, unary_operator, cast_expression, multiplicative_expression, additive_expression, shift_expression;
+non terminal relational_expression, equality_expression, and_expression, exclusive_or_expression, inclusive_or_expression, logical_and_expression, logical_or_expression, conditional_expression;
+non terminal assignment_expression, assignment_operator, expression, constant_expression, declaration, declaration_specifiers, init_declarator_list, init_declarator, storage_class_specifier, type_specifier;
+non terminal struct_or_union_specifier, struct_or_union, struct_declaration_list, struct_declaration, specifier_qualifier_list, struct_declarator_list, struct_declarator;
+non terminal enum_specifier, enumerator_list, enumerator, atomic_type_specifier, type_qualifier, function_specifier, alignment_specifier, declarator, direct_declarator;
+non terminal pointer, type_qualifier_list, parameter_type_list, parameter_list, parameter_declaration, identifier_list, type_name, abstract_declarator, direct_abstract_declarator;
+non terminal initializer, initializer_list, designation, designator_list, designator, static_assert_declaration, statement, labeled_statement, compound_statement, block_item_list, block_item;
+non terminal expression_statement, selection_statement, iteration_statement, jump_statement, translation_unit, external_declaration, function_definition, declaration_list;
+
+precedence nonassoc ELSE;
+
+start with translation_unit;
+
+primary_expression ::= IDENTIFIER | constant | string | LPAREN expression RPAREN | generic_selection;
+
+constant ::= I_CONSTANT	| F_CONSTANT | ENUMERATION_CONSTANT;
+
+enumeration_constant ::= IDENTIFIER;
+
+string ::= STRING_LITERAL
+	         | FUNC_NAME
+	          ;
+
+generic_selection
+	::= GENERIC LPAREN assignment_expression COMMA generic_assoc_list RPAREN;
+
+generic_assoc_list
+	::= generic_association
+	| generic_assoc_list COMMA generic_association
+	;
+
+generic_association
+	::= type_name DDOT assignment_expression
+	| DEFAULT DDOT assignment_expression
+	;
+
+postfix_expression
+	::= primary_expression
+	| postfix_expression LBRA expression RBRA
+	| postfix_expression LPAREN RPAREN
+	| postfix_expression LPAREN argument_expression_list RPAREN
+	| postfix_expression DOT IDENTIFIER
+	| postfix_expression PTR_OP IDENTIFIER
+	| postfix_expression INC_OP
+	| postfix_expression DEC_OP
+	| LPAREN type_name RPAREN LKEY initializer_list RKEY
+	| LPAREN type_name RPAREN LKEY initializer_list COMMA RKEY
+	;
+
+argument_expression_list
+	::= assignment_expression
+	| argument_expression_list COMMA assignment_expression
+	;
+
+unary_expression
+	::= postfix_expression
+	| INC_OP unary_expression
+	| DEC_OP unary_expression
+	| unary_operator cast_expression
+	| SIZEOF unary_expression
+	| SIZEOF LPAREN type_name RPAREN
+	| ALIGNOF LPAREN type_name RPAREN
+	;
+
+unary_operator
+	::= AND
+	| STAR
+	| PLUS
+	| MINUS
+	| TIL
+	| EXCLA
+	;
+
+cast_expression
+	::= unary_expression
+	| LPAREN type_name RPAREN cast_expression
+	;
+
+multiplicative_expression
+	::= cast_expression
+	| multiplicative_expression STAR cast_expression
+	| multiplicative_expression BAR cast_expression
+	| multiplicative_expression PERC cast_expression
+	;
+
+additive_expression
+	::= multiplicative_expression
+	| additive_expression PLUS multiplicative_expression
+	| additive_expression MINUS multiplicative_expression
+	;
+
+shift_expression
+	::= additive_expression
+	| shift_expression LEFT_OP additive_expression
+	| shift_expression RIGHT_OP additive_expression
+	;
+
+relational_expression
+	::= shift_expression
+	| relational_expression LT shift_expression
+	| relational_expression GT shift_expression
+	| relational_expression LE_OP shift_expression
+	| relational_expression GE_OP shift_expression
+	;
+
+equality_expression
+	::= relational_expression
+	| equality_expression EQ_OP relational_expression
+	| equality_expression NE_OP relational_expression
+	;
+
+and_expression
+	::= equality_expression
+	| and_expression AND equality_expression
+	;
+
+exclusive_or_expression
+	::= and_expression
+	| exclusive_or_expression CARET and_expression
+	;
+
+inclusive_or_expression
+	::= exclusive_or_expression
+	| inclusive_or_expression PIPE exclusive_or_expression
+	;
+
+logical_and_expression
+	::= inclusive_or_expression
+	| logical_and_expression AND_OP inclusive_or_expression
+	;
+
+logical_or_expression
+	::= logical_and_expression
+	| logical_or_expression OR_OP logical_and_expression
+	;
+
+conditional_expression
+	::= logical_or_expression
+	| logical_or_expression INTER expression DDOT conditional_expression
+	;
+
+assignment_expression
+	::= conditional_expression
+	| unary_expression assignment_operator assignment_expression
+	;
+
+assignment_operator
+	::= EQUALS
+	| MUL_ASSIGN
+	| DIV_ASSIGN
+	| MOD_ASSIGN
+	| ADD_ASSIGN
+	| SUB_ASSIGN
+	| LEFT_ASSIGN
+	| RIGHT_ASSIGN
+	| AND_ASSIGN
+	| XOR_ASSIGN
+	| OR_ASSIGN
+	;
+
+expression
+	::= assignment_expression
+	| expression COMMA assignment_expression
+	;
+
+constant_expression
+	::= conditional_expression	/* with constraints */
+	;
+
+declaration
+	::= declaration_specifiers SEMICOLON
+	| declaration_specifiers init_declarator_list {:
+	  if (declaration_specifiers.toString().indexOf(">typedef<")>0) {
+	      for (XMLElement e:
+          ((XMLElement)init_declarator_list).selectById("identifier"))
+		        Parser.addType(((Terminal)e).value().toString());
+	  }
+	  :} SEMICOLON
+	| static_assert_declaration
+	;
+
+declaration_specifiers
+	::= storage_class_specifier declaration_specifiers
+	| storage_class_specifier
+	| type_specifier declaration_specifiers
+	| type_specifier
+	| type_qualifier declaration_specifiers
+	| type_qualifier
+	| function_specifier declaration_specifiers
+	| function_specifier
+	| alignment_specifier declaration_specifiers
+	| alignment_specifier
+	;
+
+init_declarator_list
+	::= init_declarator
+	| init_declarator_list COMMA init_declarator
+	;
+
+init_declarator
+	::= declarator EQUALS initializer
+	| declarator
+	;
+
+storage_class_specifier
+	::= TYPEDEF
+	| EXTERN
+	| STATIC
+	| THREAD_LOCAL
+	| AUTO
+	| REGISTER
+	;
+
+type_specifier
+	::= VOID
+	| CHAR
+	| SHORT
+	| INT
+	| LONG
+	| FLOAT
+	| DOUBLE
+	| SIGNED
+	| UNSIGNED
+	| BOOL
+	| COMPLEX
+	| IMAGINARY	  	/* non-mandated extension */
+	| atomic_type_specifier
+	| struct_or_union_specifier
+	| enum_specifier
+	| TYPEDEF_NAME
+	;
+
+struct_or_union_specifier
+	::= struct_or_union LKEY struct_declaration_list RKEY
+	| struct_or_union IDENTIFIER LKEY struct_declaration_list RKEY
+	| struct_or_union IDENTIFIER
+	;
+
+struct_or_union
+	::= STRUCT
+	| UNION
+	;
+
+struct_declaration_list
+	::= struct_declaration
+	| struct_declaration_list struct_declaration
+	;
+
+struct_declaration
+	::= specifier_qualifier_list SEMICOLON	/* for anonymous struct/union */
+	| specifier_qualifier_list struct_declarator_list SEMICOLON
+	| static_assert_declaration
+	;
+
+specifier_qualifier_list
+	::= type_specifier specifier_qualifier_list
+	| type_specifier
+	| type_qualifier specifier_qualifier_list
+	| type_qualifier
+	;
+
+struct_declarator_list
+	::= struct_declarator
+	| struct_declarator_list COMMA struct_declarator
+	;
+
+struct_declarator
+	::= DDOT constant_expression
+	| declarator DDOT constant_expression
+	| declarator
+	;
+
+enum_specifier
+	::= ENUM LKEY enumerator_list RKEY
+	| ENUM LKEY enumerator_list COMMA RKEY
+	| ENUM IDENTIFIER LKEY enumerator_list RKEY
+	| ENUM IDENTIFIER LKEY enumerator_list COMMA RKEY
+	| ENUM IDENTIFIER
+	;
+
+enumerator_list
+	::= enumerator
+	| enumerator_list COMMA enumerator
+	;
+
+enumerator	/* identifiers must be flagged as ENUMERATION_CONSTANT */
+	::= enumeration_constant EQUALS constant_expression
+	| enumeration_constant
+	;
+
+/*atomic_type_specifier
+	::= ATOMIC LPAREN type_name RPAREN
+	;*/
+
+type_qualifier
+	::= CONST
+	| RESTRICT
+	| VOLATILE
+	| ATOMIC
+	;
+
+function_specifier
+	::= INLINE
+	| NORETURN
+	;
+
+alignment_specifier
+	::= ALIGNAS LPAREN type_name RPAREN
+	| ALIGNAS LPAREN constant_expression RPAREN
+	;
+
+declarator
+	::= pointer direct_declarator
+	| direct_declarator
+	;
+
+direct_declarator
+	::= IDENTIFIER
+	| LPAREN declarator RPAREN
+	| direct_declarator LBRA RBRA
+	| direct_declarator LBRA STAR RBRA
+	| direct_declarator LBRA STATIC type_qualifier_list assignment_expression RBRA
+	| direct_declarator LBRA STATIC assignment_expression RBRA
+	| direct_declarator LBRA type_qualifier_list STAR RBRA
+	| direct_declarator LBRA type_qualifier_list STATIC assignment_expression RBRA
+	| direct_declarator LBRA type_qualifier_list assignment_expression RBRA
+	| direct_declarator LBRA type_qualifier_list RBRA
+	| direct_declarator LBRA assignment_expression RBRA
+	| direct_declarator LPAREN parameter_type_list RPAREN
+	| direct_declarator LPAREN RPAREN
+	| direct_declarator LPAREN identifier_list RPAREN
+	;
+
+pointer
+	::= STAR type_qualifier_list pointer
+	| STAR type_qualifier_list
+	| STAR pointer
+	| STAR
+	;
+
+type_qualifier_list
+	::= type_qualifier
+	| type_qualifier_list type_qualifier
+	;
+
+
+parameter_type_list
+	::= parameter_list COMMA ELLIPSIS
+	| parameter_list
+	;
+
+parameter_list
+	::= parameter_declaration
+	| parameter_list COMMA parameter_declaration
+	;
+
+parameter_declaration
+	::= declaration_specifiers declarator
+	| declaration_specifiers abstract_declarator
+	| declaration_specifiers
+	;
+
+identifier_list
+	::= IDENTIFIER
+	| identifier_list COMMA IDENTIFIER
+	;
+
+type_name
+	::= specifier_qualifier_list abstract_declarator
+	| specifier_qualifier_list
+	;
+
+abstract_declarator
+	::= pointer direct_abstract_declarator
+	| pointer
+	| direct_abstract_declarator
+	;
+
+direct_abstract_declarator
+	::= LPAREN abstract_declarator RPAREN
+	| LBRA RBRA
+	| LBRA STAR RBRA
+	| LBRA STATIC type_qualifier_list assignment_expression RBRA
+	| LBRA STATIC assignment_expression RBRA
+	| LBRA type_qualifier_list STATIC assignment_expression RBRA
+	| LBRA type_qualifier_list assignment_expression RBRA
+	| LBRA type_qualifier_list RBRA
+	| LBRA assignment_expression RBRA
+	| direct_abstract_declarator LBRA RBRA
+	| direct_abstract_declarator LBRA STAR RBRA
+	| direct_abstract_declarator LBRA STATIC type_qualifier_list assignment_expression RBRA
+	| direct_abstract_declarator LBRA STATIC assignment_expression RBRA
+	| direct_abstract_declarator LBRA type_qualifier_list assignment_expression RBRA
+	| direct_abstract_declarator LBRA type_qualifier_list STATIC assignment_expression RBRA
+	| direct_abstract_declarator LBRA type_qualifier_list RBRA
+	| direct_abstract_declarator LBRA assignment_expression RBRA
+	| LPAREN RPAREN
+	| LPAREN parameter_type_list RPAREN
+	| direct_abstract_declarator LPAREN RPAREN
+	| direct_abstract_declarator LPAREN parameter_type_list RPAREN
+	;
+
+initializer
+	::= LKEY initializer_list RKEY
+	| LKEY initializer_list COMMA RKEY
+	| assignment_expression
+	;
+
+initializer_list
+	::= designation initializer
+	| initializer
+	| initializer_list COMMA designation initializer
+	| initializer_list COMMA initializer
+	;
+
+designation
+	::= designator_list EQUALS
+	;
+
+designator_list
+	::= designator
+	| designator_list designator
+	;
+
+designator
+	::= LBRA constant_expression RBRA
+	| DOT IDENTIFIER
+	;
+
+static_assert_declaration
+	::= STATIC_ASSERT LPAREN constant_expression COMMA STRING_LITERAL RPAREN SEMICOLON
+	;
+
+statement
+	::= labeled_statement
+	| {: Parser.newScope(); :} compound_statement {: Parser.deleteScope(); :}
+	| expression_statement
+	| selection_statement
+	| iteration_statement
+	| jump_statement
+	;
+
+labeled_statement
+	::= IDENTIFIER DDOT statement
+	| CASE constant_expression DDOT statement
+	| DEFAULT DDOT statement
+	;
+
+compound_statement
+	::= LKEY RKEY
+	| LKEY  block_item_list RKEY
+	;
+
+block_item_list
+	::= block_item
+	| block_item_list block_item
+	;
+
+block_item
+	::= declaration
+	| statement
+	;
+
+expression_statement
+	::= SEMICOLON
+	| expression SEMICOLON
+	;
+
+selection_statement
+	::= IF LPAREN expression RPAREN statement ELSE statement
+	| IF LPAREN expression RPAREN statement
+	| SWITCH LPAREN expression RPAREN statement
+	;
+
+iteration_statement
+	::= WHILE LPAREN expression RPAREN statement
+	| DO statement WHILE LPAREN expression RPAREN SEMICOLON
+	| FOR LPAREN expression_statement expression_statement RPAREN statement
+	| FOR LPAREN expression_statement expression_statement expression RPAREN statement
+	| FOR LPAREN declaration expression_statement RPAREN statement
+	| FOR LPAREN declaration expression_statement expression RPAREN statement
+	;
+
+jump_statement
+	::= GOTO IDENTIFIER SEMICOLON
+	| CONTINUE SEMICOLON
+	| BREAK SEMICOLON
+	| RETURN SEMICOLON
+	| RETURN expression SEMICOLON
+	;
+
+translation_unit
+	::= external_declaration
+	| translation_unit external_declaration
+	;
+
+external_declaration
+	::= function_definition
+	| declaration
+	;
+
+function_definition ::=declaration_specifiers declarator declaration_list
+  		    				                          {: Parser.newScope(); :}
+    compound_statement		                  {: Parser.deleteScope(); :}
+  	| declaration_specifiers declarator 	  {: Parser.newScope(); :}
+  	  compound_statement 	                  {: Parser.deleteScope(); :}
+  	| declarator declaration_list 	        {: Parser.newScope(); :}
+  	  compound_statement	                  {: Parser.deleteScope(); :}
+  	| declarator                            {: Parser.newScope(); :}
+  	  compound_statement 	                  {: Parser.deleteScope(); :}
+  	;
+
+declaration_list
+	::= declaration
+	| declaration_list declaration
+	;
