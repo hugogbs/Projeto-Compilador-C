@@ -477,7 +477,7 @@ public class Lexer implements java_cup.runtime.Scanner, sym {
 
   private int typecheck(String s){
   	if (Parser.lookupType(s.trim())) {
-  	    return TYPE_NAME;
+  	    return TYPEDEF_NAME;
   	}
   	else {
   	    return IDENTIFIER;

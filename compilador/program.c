@@ -4,7 +4,7 @@ int sum (int, int);
 int main () /* Main function */
 {
     printf ("This is a C basic program \n");
-    total = sum (1, 1);
+    total = sum (1, 1)
     printf ("Sum of two numbers : %d \n", total);
     return 0;
 }
