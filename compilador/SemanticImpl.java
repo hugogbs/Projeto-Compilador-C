@@ -1,13 +1,25 @@
 import java.util.*;
 public class SemanticImpl {
 
+  private static Map<String, List<String>> tiposCompativeis = new HashMap<String, List<String>>();
+
   private List<Type> secondaryTypes = new ArrayList<Type>();
   private static List<Type> BASIC_TYPES;
+  private static SemanticImpl semantic; // Deve sempre ser um Singleton
 
 
-  public static SemanticImpl getInstance() {};
 
-  private static void initCollections() {};
+  public static SemanticImpl getInstance() {
+    if (semantic == null) {
+      initCollections();
+    }
+    return semantic;
+  };
+
+  private static void initCollections() {
+    initBasicTypes();
+    initTypeCompatibility();
+  };
 
   public int getBlockSize() {};
 
@@ -20,23 +32,29 @@ public class SemanticImpl {
   private static void initBasicTypes() {
 		BASIC_TYPES = new ArrayList<Type>() {
 			{
-				add(new Type("int")); //
-				add(new Type("float")); //
-				add(new Type("double")); //
-        add(new Type("short")); //
-        add(new Type("unsigned"));
-        add(new Type("signed")); //
-				add(new Type("long")); //
-				add(new Type("char")); //
-				add(new Type("void")); //
-				add(new Type("String"));
-				add(new Type("Object"));
-				add(new Type("Integer"));
+				add(new Type("float"));
+        add(new Type("int"));
+        add(new Type("string"));
 			};
 		};
 	};
 
-  private static void initTypeCompatibility() {};
+  private static void initTypeCompatibility() {
+
+    List<String> stringCompTypes = new ArrayList<String>();
+    stringCompTypes.add("string");
+
+    List<String> intCompTypes = new ArrayList<String>();
+    intCompTypes.add("int");
+    intCompTypes.add("float");
+
+    List<String> floatCompTypes = new ArrayList<String>();
+    floatCompTypes.add("float");
+    floatCompTypes.add("int");
+    //
+    // List<String> charCompTypes = new ArrayList<String>();
+    // charCompTypes.add("char");
+  };
 
   private static void iniTestingOperators() {};
 
@@ -73,7 +91,17 @@ public class SemanticImpl {
 
   public void checkIsBoolean(Type type) throws InvalidTypeException {};
 
-  public boolean checkTypeCompatibility(Type leftType, Type rightType) {};
+  public boolean checkTypeCompatibility(Type leftType, Type rightType) {
+    if (leftType.equals(rightType)) {
+      return true;
+    } else {
+      List<String> types = tiposCompativeis.get(leftType.getName());
+      if (types == null) {
+        return false;
+      }
+      return types.contains(rightType.getName());
+    }
+  };
 
   public void addType(Type type) {
 		if (!secondaryTypes.contains(type)) {
@@ -136,7 +164,7 @@ public class SemanticImpl {
 
   private Operation getOperator(String op) {};
 
-  
+
 
 
 };
