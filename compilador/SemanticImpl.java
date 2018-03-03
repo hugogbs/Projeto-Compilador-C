@@ -7,8 +7,6 @@ public class SemanticImpl {
   private static List<Type> BASIC_TYPES;
   private static SemanticImpl semantic; // Deve sempre ser um Singleton
 
-
-
   public static SemanticImpl getInstance() {
     if (semantic == null) {
       initCollections();
@@ -34,15 +32,15 @@ public class SemanticImpl {
 			{
 				add(new Type("float"));
         add(new Type("int"));
-        add(new Type("string"));
+        add(new Type("char"));
 			};
 		};
 	};
 
   private static void initTypeCompatibility() {
 
-    List<String> stringCompTypes = new ArrayList<String>();
-    stringCompTypes.add("string");
+    List<String> charCompTypes = new ArrayList<String>();
+    charCompTypes.add("char");
 
     List<String> intCompTypes = new ArrayList<String>();
     intCompTypes.add("int");
@@ -112,7 +110,12 @@ public class SemanticImpl {
 		};
 	};
 
-  public boolean checkTypeOfAssignment(Variable variable, Expression exp) throws InvalidTypeAssignmentException {};
+  public boolean checkTypeOfAssignment(Variable variable, Expression exp) throws InvalidTypeAssignmentException {
+    if (!variable.getType().equals(exp.getType())) {
+      throw new InvalidTypeAssignmentException("Tipo incompatível");
+    }
+    return true;
+  };
 
   public boolean isNumericExpression(Expression le, Expression re) throws InvalidOperationException {};
 
@@ -140,7 +143,27 @@ public class SemanticImpl {
   private Type getMajorType(Type type1, Type type2) {};
 
   public void checkVariableAttribution(String id, Expression expression) throws
-    InvalidVariableException, InvalidTypeException, InvalidFunctionException {};
+    InvalidVariableException, InvalidTypeException, InvalidFunctionException {
+      if (!checkVariableExistence(id)) {
+        throw new InvalidVariableException("Variável inexistente");
+      }
+      Type nullTest = new Type("null")
+      String expType = new String(expression.getType());
+      if (!expType.equals(nullTest) &&
+          !checkValidExistingType(expType)) {
+            throw new InvalidTypeException("Tipo inexistente");
+          }
+      Type indType = findVariableByIdentifier(id).getType();
+      if(expType.equals(nullTest)) {
+        return;
+      }
+      if (!checkTypeCompatibility(identifierType, expType)) {
+        String errorMessage = String.format(
+            "Tipos incompatíveis! %s não é compatível com %s", indType, expType;
+            throw new InvalidFunctionException(errorMessage);
+        )
+      }
+    };
 
   public Variable findVariableByIdentifier(String variableName) {};
 
