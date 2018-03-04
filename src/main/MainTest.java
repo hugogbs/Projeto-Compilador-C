@@ -12,7 +12,7 @@ import java.io.IOException;
 public class MainTest {
 	
 	public static void main(String[] args) throws IOException {
-		String filePath = "examples/SemanticTest.java";
+		String filePath = "examples/SemanticTest.c";
 		Scanner scanner = null;
 		try {
 			scanner = new Scanner(new BufferedReader(new FileReader(filePath)));
