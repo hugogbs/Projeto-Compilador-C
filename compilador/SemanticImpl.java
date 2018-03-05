@@ -1,15 +1,23 @@
 import java.util.*;
 public class SemanticImpl {
 
+  private static Map<String, List<String>> tiposCompativeis = new HashMap<String, List<String>>();
+
   private List<Type> secondaryTypes = new ArrayList<Type>();
   private static List<Type> BASIC_TYPES;
-  static CodeGenerator codeGenerator;
-  private static String currentOperator;
+  private static SemanticImpl semantic; // Deve sempre ser um Singleton
 
+  public static SemanticImpl getInstance() {
+    if (semantic == null) {
+      initCollections();
+    }
+    return semantic;
+  };
 
-  public static SemanticImpl getInstance() {};
-
-  private static void initCollections() {};
+  private static void initCollections() {
+    initBasicTypes();
+    initTypeCompatibility();
+  };
 
   public int getBlockSize() {};
 
@@ -19,37 +27,32 @@ public class SemanticImpl {
 
   protected SemanticImpl() {};
 
-  /* tipos básicos da linguagem */
   private static void initBasicTypes() {
 		BASIC_TYPES = new ArrayList<Type>() {
 			{
-				add(new Type("int")); //
-				add(new Type("float")); //
-				add(new Type("double")); //
-        add(new Type("short")); //
-        add(new Type("unsigned"));
-        add(new Type("signed")); //
-				add(new Type("long")); //
-				add(new Type("char")); //
-				add(new Type("void")); //
-				add(new Type("String"));
-				add(new Type("Object"));
-				add(new Type("Integer"));
-			}
+				add(new Type("float"));
+        add(new Type("int"));
+        add(new Type("char"));
+			};
 		};
 	};
 
-  /*add um novo tipo*/
-  public void addType(Type type) {
-		if (!secondaryTypes.contains(type)) {
-			secondaryTypes.add(type);
-			List<String> tipos = new ArrayList<String>();
-			tipos.add(type.getName());
-			tiposCompativeis.put(type.getName(), tipos);
-		};
-	};
+  private static void initTypeCompatibility() {
 
-  private static void initTypeCompatibility() {};
+    List<String> charCompTypes = new ArrayList<String>();
+    charCompTypes.add("char");
+
+    List<String> intCompTypes = new ArrayList<String>();
+    intCompTypes.add("int");
+    intCompTypes.add("float");
+
+    List<String> floatCompTypes = new ArrayList<String>();
+    floatCompTypes.add("float");
+    floatCompTypes.add("int");
+    //
+    // List<String> charCompTypes = new ArrayList<String>();
+    // charCompTypes.add("char");
+  };
 
   private static void iniTestingOperators() {};
 
@@ -86,9 +89,33 @@ public class SemanticImpl {
 
   public void checkIsBoolean(Type type) throws InvalidTypeException {};
 
-  public boolean checkTypeCompatibility(Type leftType, Type rightType) {};
+  public boolean checkTypeCompatibility(Type leftType, Type rightType) {
+    if (leftType.equals(rightType)) {
+      return true;
+    } else {
+      List<String> types = tiposCompativeis.get(leftType.getName());
+      if (types == null) {
+        return false;
+      }
+      return types.contains(rightType.getName());
+    }
+  };
 
-  public boolean checkTypeOfAssignment(Variable variable, Expression exp) throws InvalidTypeAssignmentException {};
+  public void addType(Type type) {
+		if (!secondaryTypes.contains(type)) {
+			secondaryTypes.add(type);
+			List<String> tipos = new ArrayList<String>();
+			tipos.add(type.getName());
+			tiposCompativeis.put(type.getName(), tipos);
+		};
+	};
+
+  public boolean checkTypeOfAssignment(Variable variable, Expression exp) throws InvalidTypeAssignmentException {
+    if (!variable.getType().equals(exp.getType())) {
+      throw new InvalidTypeAssignmentException("Tipo incompatível");
+    }
+    return true;
+  };
 
   public boolean isNumericExpression(Expression le, Expression re) throws InvalidOperationException {};
 
@@ -116,7 +143,27 @@ public class SemanticImpl {
   private Type getMajorType(Type type1, Type type2) {};
 
   public void checkVariableAttribution(String id, Expression expression) throws
-    InvalidVariableException, InvalidTypeException, InvalidFunctionException {};
+    InvalidVariableException, InvalidTypeException, InvalidFunctionException {
+      if (!checkVariableExistence(id)) {
+        throw new InvalidVariableException("Variável inexistente");
+      }
+      Type nullTest = new Type("null")
+      String expType = new String(expression.getType());
+      if (!expType.equals(nullTest) &&
+          !checkValidExistingType(expType)) {
+            throw new InvalidTypeException("Tipo inexistente");
+          }
+      Type indType = findVariableByIdentifier(id).getType();
+      if(expType.equals(nullTest)) {
+        return;
+      }
+      if (!checkTypeCompatibility(identifierType, expType)) {
+        String errorMessage = String.format(
+            "Tipos incompatíveis! %s não é compatível com %s", indType, expType;
+            throw new InvalidFunctionException(errorMessage);
+        )
+      }
+    };
 
   public Variable findVariableByIdentifier(String variableName) {};
 
@@ -130,173 +177,15 @@ public class SemanticImpl {
 
   /* Auxiliary functions */
 
-  public void addVariableToTempList(Variable var) {
-    tempVariables.add(var);
-  };
+  public void addVariableToTempList(Variable var) {};
 
-  public CodeGenerator getCodeGenerator() {
-    return codeGenerator;
-  };
+  public CodeGenerator getCodeGenerator() {};
 
-  public void setCurrentOperator(boolean newCurrentOperator){
-    currentOperator = newCurrentOperator+"";
-  };
+  public void setCurrentOperator(boolean newCurrentOperator){};
 
-  public void generateBaseOpCode(String op, Expression e1, Expression e2) {
-    //System.out.println(op);
-    Operation operator = getOperator(op);
-    switch(operator){
-      case PLUS:
-        codeGenerator.generatePLUSCode(e1.getRegister(), e2.getRegister());
-        break;
-      case MINUS:
-        codeGenerator.generateMINUSCode(e1.getRegister(), e2.getRegister());
-        break;
-      case STAR:
-        codeGenerator.generateMULTCode(e1.getRegister(), e2.getRegister());
-        break;
-      case BAR:
-        codeGenerator.generateDIVCode(e1.getRegister(), e2.getRegister());
-        break;
-      case AND_OP:
-        codeGenerator.generateANDCode(e1.getRegister(), e2.getRegister());
-        break;
-      case OR_OP:
-        codeGenerator.generateORCode(e1.getRegister(), e2.getRegister());
-        break;
-      case EQ_OP:
-        codeGenerator.generateEQCode(e1.getRegister(), e2.getRegister());
-        break;
-      case NE_OP:
-        codeGenerator.generateNECode(e1.getRegister(), e2.getRegister());
-        break;
-      case LE_OP:
-        codeGenerator.generateLECode(e1.getRegister(), e2.getRegister());
-        break;
-      case LT:
-        codeGenerator.generateLTCode(e1.getRegister(), e2.getRegister());
-        break;
-      case GE_OP:
-        codeGenerator.generateGECode(e1.getRegister(), e2.getRegister());
-        break;
-      case GT:
-        codeGenerator.generateGTCode(e1.getRegister(), e2.getRegister());
-        break;
-      case EQUALS:
-        codeGenerator.generateSTCode(e1);
-        break;
-      case ADD_ASSIGN:
-        codeGenerator.generateANDACode(e1, e2);
-        break;
-      case SUB_ASSIGN:
-        codeGenerator.generateSUBACode(e1.getRegister(), e2.getRegister());
-        break;
-      case MUL_ASSIGN:
-        codeGenerator.generateMULACode(e1.getRegister(), e2.getRegister());
-        break;
-      case DIV_ASSIGN:
-        codeGenerator.generateDIVACode(e1, e2);
-        break;
-      case MOD_ASSIGN:
-        codeGenerator.generateMODACode(e1.getRegister(), e2);
-        break;
-      case AND_ASSIGN:
-        codeGenerator.generateANDACode(e1.getRegister(), e2); //tem or equals nao?
-        break;
-      case XOR_ASSIGN:
-        codeGenerator.generateXORACode(e1, e2);
-        break;
-      default:
-              break;
-    }
-  };
+  public void generateBaseOpCode(String op, Expression e1, Expression e2) {};
 
-  private Operation getOperator(String op) {
-    switch(op){
-      case "+":
-        return Operation.PLUS;
-      case "-":
-        return Operation.MINUS;
-      case "*":
-        return Operation.STAR; /*mudar esse nome?*/
-      case "/":
-        return Operation.BAR;
-      case "%":
-        return Operation.PERC;
-      case "!":
-        return Operation.EXCLA;
-      case "&&":
-        return Operation.AND_OP;
-      case "||":
-        return Operation.OR_OP;
-      case "==":
-        return Operation.EQ_OP;
-      case "!=":
-        return Operation.NE_OP;
-      case "<=":
-        return Operation.LE_OP;
-      case "<":
-        return Operation.LT;
-      case ">=":
-        return Operation.GE_OP;
-      case ">":
-        return Operation.GT;
-      case "=":
-        return Operation.EQUALS;
-      case "+=":
-        return Operation.ADD_ASSIGN;
-      case "-=":
-        return Operation.SUB_ASSIGN;
-      case "*=":
-        return Operation.MUL_ASSIGN;
-      case "/=":
-        return Operation.DIV_ASSIGN;
-      case "%=":
-        return Operation.MOD_ASSIGN;
-      case "&=":
-        return Operation.AND_ASSIGN;
-      case "^=":
-        return Operation.XOR_ASSIGN;
-      case "&":
-        return Operation.AND;
-      case "|":
-        return Operation.PIPE;
-      case "~":
-        return Operation.TIL;
-      case "^":
-        return Operation.CARET;
-      case "<<":
-        return Operation.LEFT_OP;
-      case ">>":
-        return Operation.RIGHT_OP;
-      case "++":
-        return Operation.INC_OP;
-      case "--":
-        return Operation.DEC_OP;
-      case "...":
-        return Operation.ELLIPSIS;
-      case ">>=":
-        return Operation.RIGHT_ASSIGN;
-      case "<<=":
-        return Operation.LEFT_ASSIGN;
-      case "|=":
-        return Operation.OR_ASSIGN;
-      case "->":
-        return Operation.PTR_OP;
-      case ":":
-        return Operation.DDOT;
-      case ",":
-        return Operation.COMMA;
-      case ";":
-        return Operation.SEMICOLON;
-      case ".":
-        return Operation.DOT;
-      case "?":
-        return Operation.INTER;
-      default:
-        return Operation.PLUS;
-    }
-  };
+  private Operation getOperator(String op) {};
 
 
 
