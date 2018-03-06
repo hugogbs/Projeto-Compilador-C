@@ -134,7 +134,9 @@ unary_operator
 
 cast_expression
 	::= unary_expression
-	| LPAREN type_name RPAREN cast_expression
+	| LPAREN type_name:t1 RPAREN cast_expression:t2 {: SemanticImpl.getInstance().checkTypeCompatibility(t1,t2);
+                                                     RESULT = new Expression((Type) t1);
+                                                  :}
 	;
 
 multiplicative_expression
@@ -220,7 +222,9 @@ assignment_operator
 	;
 
 expression
-	::= assignment_expression:e {: Logger.print("Line 223"); RESULT =  ListCreator.newList(e); :}
+	::= assignment_expression:e {: Logger.print("Line 223");
+                                 RESULT =  ListCreator.newList(e);
+                                 SemanticImpl.getCodeGenerator().getInstance().generateLDCode((Expression) e):}
 	| expression:e COMMA assignment_expression:el {: Logger.print("Line 224"); ((ArrayList<Expression>) el).add((Expression)e); RESULT = e; :}
 	;
 

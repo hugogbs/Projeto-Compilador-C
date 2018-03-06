@@ -380,7 +380,7 @@ public class CodeGenerator {
 
 	public void generateHalt() {
 		labels += 8;
-		addCode(labels + ": HALT");
+		addCode(labels + ": HALT\n");
 	}
 
 	public String getAssemblyCode() {
