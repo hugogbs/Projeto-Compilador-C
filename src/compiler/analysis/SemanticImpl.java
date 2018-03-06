@@ -30,7 +30,9 @@ public class SemanticImpl {
 	public static SemanticImpl getInstance() {
 		if (singleton == null) {
 			singleton = new SemanticImpl();
+		if (codeGenerator == null) {
 			codeGenerator = new CodeGenerator();
+		}
 			calculator = new Calculator();
 			initCollections();
 		}
@@ -531,7 +533,7 @@ public class SemanticImpl {
 		tempVariables.add(var);
 	}
 
-	public CodeGenerator getCodeGenerator() {
+	public static CodeGenerator getCodeGenerator() {
 		return codeGenerator;
 	}
 	

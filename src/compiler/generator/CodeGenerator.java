@@ -52,7 +52,7 @@ public class CodeGenerator {
 	}
 	/*ADD CODE */
 
-	public void generateADDCode() {  /*pq sem?*/
+	public void generateADDCode() {  /*pq sem? Amiga nem sei*/
 		labels += 8;
 
 		Register one = registers[register - 1];
@@ -75,7 +75,8 @@ public class CodeGenerator {
 		addCode(labels + ": ADD " + result + ", " + one + ", " + two);
 	}
 
-	public void generateADDCode(Register result, Register one, Expression exp) { /*exp? se sim, pq só o primeiro é registrador?*/
+	public void generateADDCode(Register result, Register one, Expression exp) { /*exp? se sim, pq só o primeiro é registrador?
+																					Cagação, parece estar errado, mas talvez n esteja*/
 		labels += 8;
 		addCode(labels + ": ADD " + result + ", " + one + ", #" + exp.getAssemblyValue());
 	}

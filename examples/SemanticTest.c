@@ -19,10 +19,11 @@ int main(void)
   int a;
   char b;
   float c;
+  int d;
   for(contador = 1; contador <= 10; contador++)
   {
-      printf("%d ", contador);
       c = a - b;
+      d = c + a;
   }
   getch();
   return(0);
