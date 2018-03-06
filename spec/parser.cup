@@ -63,21 +63,22 @@ precedence nonassoc ELSE;
 
 start with translation_unit;
 
-primary_expression ::= IDENTIFIER
-  | constant
-  | string
+primary_expression ::= IDENTIFIER:i {:Logger.print("Line 66"); RESULT = i;:}
+  | constant:c {: RESULT=c; :}
+  | string:s {: Expression ep = new Expression(new Type("char"),(String) s); RESULT=ep; :}
   | LPAREN expression RPAREN
   | generic_selection
   ;
 
-constant ::= I_CONSTANT
-  | F_CONSTANT
+constant ::= I_CONSTANT:c {: RESULT=new Expression(new Type("int"), c.toString()); :}
+  | F_CONSTANT:c {: RESULT=new Expression(new Type("float"), c.toString()); :}
   | ENUMERATION_CONSTANT
   ;
 
-enumeration_constant ::= IDENTIFIER;
+enumeration_constant ::= IDENTIFIER:i {:Logger.print("Line 78"); RESULT = i;:}
+;
 
-string ::= STRING_LITERAL
+string ::= STRING_LITERAL:s {: RESULT=s; :}
 	         | FUNC_NAME
 	          ;
 
@@ -96,16 +97,16 @@ generic_association
 	;
 
 postfix_expression
-	::= primary_expression
-	| postfix_expression LBRA expression RBRA
-	| postfix_expression LPAREN RPAREN
-	| postfix_expression LPAREN argument_expression_list RPAREN
-	| postfix_expression DOT IDENTIFIER
-	| postfix_expression PTR_OP IDENTIFIER
-	| postfix_expression INC_OP
-	| postfix_expression DEC_OP
-	| LPAREN type_name RPAREN LKEY initializer_list RKEY
-	| LPAREN type_name RPAREN LKEY initializer_list COMMA RKEY
+	::= primary_expression:ep {: Logger.print("Line 100"); RESULT=ep; :}
+	| postfix_expression LBRA expression RBRA {:Logger.print("Line 101"); :}
+	| postfix_expression:id LPAREN RPAREN {:Logger.print("Line 102"); :}
+	| postfix_expression:id LPAREN argument_expression_list RPAREN {:Logger.print("Line 103"); :}
+	| postfix_expression DOT IDENTIFIER {:Logger.print("Line 104"); :}
+	| postfix_expression PTR_OP IDENTIFIER {:Logger.print("Line 105"); :}
+	| postfix_expression INC_OP {:Logger.print("Line 106"); :}
+	| postfix_expression DEC_OP {:Logger.print("Line 107"); :}
+	| LPAREN type_name RPAREN LKEY initializer_list RKEY {:Logger.print("Line 108"); :}
+	| LPAREN type_name RPAREN LKEY initializer_list COMMA RKEY {:Logger.print("Line 109"); :}
 	;
 
 argument_expression_list
@@ -114,7 +115,14 @@ argument_expression_list
 	;
 
 unary_expression
-	::= postfix_expression
+	::= postfix_expression:ep {: if (ep instanceof String) {Variable v = SemanticImpl.getInstance().findVariableByIdentifier((String) ep);
+                                                if (v.getValue() != null) {
+                                                  RESULT=v.getValue();
+                                                } else {
+                                                  RESULT=new Expression((Type) v.getType());
+                                                }} else {
+                                                  RESULT=ep;
+                                                } :}
 	| INC_OP unary_expression
 	| DEC_OP unary_expression
 	| unary_operator cast_expression
@@ -133,31 +141,31 @@ unary_operator
 	;
 
 cast_expression
-	::= unary_expression
+	::= unary_expression:ep {: RESULT=ep; :}
 	| LPAREN type_name RPAREN cast_expression
 	;
 
 multiplicative_expression
-	::= cast_expression  {: Logger.print("Line 141"); :}
-	| multiplicative_expression STAR cast_expression {: Logger.print("Line 142"); :}
-	| multiplicative_expression BAR cast_expression {: Logger.print("Line 143"); :}
-	| multiplicative_expression PERC cast_expression {: Logger.print("Line 144"); :}
+	::= cast_expression:ep  {: Logger.print("Line 141"); RESULT=ep; :}
+	| multiplicative_expression:le STAR cast_expression:re {: RESULT = SemanticImpl.getInstance().getExpression((Expression) le,  "*", (Expression) re); :}
+	| multiplicative_expression:le BAR cast_expression:re {: RESULT = SemanticImpl.getInstance().getExpression((Expression) le,  "/", (Expression) re); :}
+	| multiplicative_expression:le PERC cast_expression:re {: RESULT = SemanticImpl.getInstance().getExpression((Expression) le,  "%", (Expression) re); :}
 	;
 
 additive_expression
-	::= multiplicative_expression
-	| additive_expression PLUS multiplicative_expression
-	| additive_expression MINUS multiplicative_expression
+	::= multiplicative_expression:ep {: RESULT=ep; :}
+	| additive_expression:le PLUS multiplicative_expression:re {: RESULT = SemanticImpl.getInstance().getExpression((Expression) le,  "+", (Expression) re); :}
+	| additive_expression:le MINUS multiplicative_expression:re {: RESULT = SemanticImpl.getInstance().getExpression((Expression) le,  "-", (Expression) re); :}
 	;
 
 shift_expression
-	::= additive_expression
+	::= additive_expression:ep {: RESULT=ep; :}
 	| shift_expression LEFT_OP additive_expression
 	| shift_expression RIGHT_OP additive_expression
 	;
 
 relational_expression
-	::= shift_expression {: Logger.print("Line 160"); :}
+	::= shift_expression:ep  {: Logger.print("Line 160"); RESULT=ep; :}
 	| relational_expression LT shift_expression {: Logger.print("Line 161"); :}
 	| relational_expression GT shift_expression {: Logger.print("Line 162"); :}
 	| relational_expression LE_OP shift_expression {: Logger.print("Line 163"); :}
@@ -165,7 +173,7 @@ relational_expression
 	;
 
 equality_expression
-	::= relational_expression  {: Logger.print("Line 164"); :}
+	::= relational_expression:ep  {: Logger.print("Line 164"); RESULT=ep; :}
 	| equality_expression EQ_OP relational_expression {: Logger.print("Line 169"); :}
 	| equality_expression NE_OP relational_expression {: Logger.print("Line 170"); :}
 	;
@@ -196,12 +204,12 @@ logical_or_expression
 	;
 
 conditional_expression
-	::= logical_or_expression
+	::= logical_or_expression:ep {: Logger.print("Line 200"); RESULT=ep; :}
 	| logical_or_expression INTER expression DDOT conditional_expression
 	;
 
 assignment_expression
-	::= conditional_expression
+	::= conditional_expression:ep {: Logger.print("Line 205"); RESULT=ep; :}
 	| unary_expression assignment_operator assignment_expression
 	;
 
@@ -236,7 +244,7 @@ declaration
           ((XMLElement)idl).selectById("identifier"))
 		        Parser.addType(((Terminal)e).value().toString());
 	  }
-	  :}*/ SEMICOLON {: Logger.print("Line 239"); :}
+	  :}*/ SEMICOLON {: Logger.print("Line 239"); SemanticImpl.getInstance().addVariablesFromTempList((Type) ds); :}
 	| static_assert_declaration {: Logger.print("Line 240"); :}
 	;
 
@@ -244,7 +252,7 @@ declaration_specifiers
 	::= storage_class_specifier declaration_specifiers
 	| storage_class_specifier
 	| type_specifier declaration_specifiers
-	| type_specifier
+	| type_specifier:t {: Logger.print("Line 239"); RESULT = t; :}
 	| type_qualifier declaration_specifiers
 	| type_qualifier
 	| function_specifier declaration_specifiers
@@ -254,13 +262,13 @@ declaration_specifiers
 	;
 
 init_declarator_list
-	::= init_declarator
+	::= init_declarator:v {: Logger.print("Line 258"); RESULT = v; :}
 	| init_declarator_list COMMA init_declarator
 	;
 
 init_declarator
-	::= declarator EQUALS initializer
-	| declarator
+	::= declarator:id EQUALS initializer:ep {: Variable v = new Variable((String) id, new Type("null"), (Expression) ep); SemanticImpl.getInstance().addVariableToTempList(v); RESULT=v; :}
+	| declarator:id {: Variable v = new Variable((String) id, new Type("null"));SemanticImpl.getInstance().addVariableToTempList(v);RESULT=v; :}
 	;
 
 storage_class_specifier
@@ -283,8 +291,8 @@ type_specifier
 	| SIGNED {:RESULT = new Type("signed"); Logger.print("SIGNED at line 283");:}
 	| UNSIGNED {:RESULT = new Type("unsigned"); Logger.print("UNSIGNED at line 284");:}
 	| BOOL {:RESULT = new Type("bool"); Logger.print("BOOL at line 285");:}
-	| COMPLEX {:RESULT = new Type("complex"); Logger.print("COMPLEX at line 286");:}
-	| IMAGINARY {:RESULT = new Type("imaginary"); Logger.print("IMAGINARY at line 287");:}	  	/* non-mandated extension */
+	| COMPLEX
+	| IMAGINARY  	/* non-mandated extension */
 	| atomic_type_specifier:ats {:Type t = new Type((String) ats); RESULT = t; Logger.print("line 288");:}
 	| struct_or_union_specifier:sous {:Type t = new Type((String) sous); RESULT = t;; Logger.print("line 289");:}
 	| enum_specifier:es {:Type t = new Type((String) es); RESULT = t; Logger.print("line 290");:}
@@ -371,12 +379,12 @@ alignment_specifier
 	;
 
 declarator
-	::= pointer direct_declarator
-	| direct_declarator
+	::= pointer direct_declarator {: Logger.print("Line 375"); :}
+	| direct_declarator:v {: Logger.print("Line 376"); RESULT =  v; :}
 	;
 
 direct_declarator
-	::= IDENTIFIER
+	::= IDENTIFIER:id {: Logger.print("Line 380"); RESULT = id; :}
 	| LPAREN declarator RPAREN
 	| direct_declarator LBRA RBRA
 	| direct_declarator LBRA STAR RBRA
@@ -387,7 +395,7 @@ direct_declarator
 	| direct_declarator LBRA type_qualifier_list assignment_expression RBRA
 	| direct_declarator LBRA type_qualifier_list RBRA
 	| direct_declarator LBRA assignment_expression RBRA
-	| direct_declarator LPAREN parameter_type_list RPAREN
+	| direct_declarator:id LPAREN parameter_type_list:parameter_list RPAREN
 	| direct_declarator LPAREN RPAREN
 	| direct_declarator LPAREN identifier_list RPAREN
 	;
@@ -407,16 +415,16 @@ type_qualifier_list
 
 parameter_type_list
 	::= parameter_list COMMA ELLIPSIS
-	| parameter_list
+	| parameter_list:pl {: Logger.print("Line 418"); RESULT=pl; :}
 	;
 
 parameter_list
-	::= parameter_declaration
-	| parameter_list COMMA parameter_declaration
+	::= parameter_declaration:p {:Logger.print("Line 422"); RESULT =  ListCreator.newList(p);:}
+	| parameter_list:pl COMMA parameter_declaration:p {: ((ArrayList<Parameter>) pl).add(0, (Parameter) p); RESULT = pl; :}
 	;
 
 parameter_declaration
-	::= declaration_specifiers declarator
+	::= declaration_specifiers:t declarator:id {: Variable v = new Variable((String) id, (Type) t);RESULT = v; :}
 	| declaration_specifiers abstract_declarator
 	| declaration_specifiers
 	;
@@ -464,7 +472,7 @@ direct_abstract_declarator
 initializer
 	::= LKEY initializer_list RKEY
 	| LKEY initializer_list COMMA RKEY
-	| assignment_expression
+	| assignment_expression:ep {: Logger.print("Line 468"); RESULT=ep; :}
 	;
 
 initializer_list
@@ -498,7 +506,7 @@ statement
 	| expression_statement
 	| selection_statement
 	| iteration_statement
-	| jump_statement
+	| jump_statement:st {: RESULT=st; :}
 	;
 
 labeled_statement
@@ -509,17 +517,17 @@ labeled_statement
 
 compound_statement
 	::= LKEY RKEY
-	| LKEY  block_item_list RKEY
+	| LKEY  block_item_list:st RKEY {: Logger.print("Line 513"); RESULT =  st; :}
 	;
 
 block_item_list
-	::= block_item
-	| block_item_list block_item
+	::= block_item:st {:  Logger.print("Line 517"); RESULT=st; :}
+	| block_item_list block_item:st {:  Logger.print("Line 518"); RESULT=st; :}
 	;
 
 block_item
 	::= declaration
-	| statement
+	| statement:st {: Logger.print("Line 523"); RESULT=st; :}
 	;
 
 expression_statement

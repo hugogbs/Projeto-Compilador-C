@@ -16,9 +16,13 @@
 int main(void)
 {
   int contador; //variável de controle do loop
+  int a;
+  char b;
+  float c;
   for(contador = 1; contador <= 10; contador++)
   {
       printf("%d ", contador);
+      c = a - b;
   }
   getch();
   return(0);
