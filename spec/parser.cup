@@ -164,7 +164,8 @@ multiplicative_expression
 
 additive_expression
 	::= multiplicative_expression:ep {: RESULT=ep; :}
-	| additive_expression:le PLUS multiplicative_expression:re {: RESULT = SemanticImpl.getInstance().getExpression((Expression) le,  "+", (Expression) re); :}
+	| additive_expression:le PLUS multiplicative_expression:re {: SemanticImpl.getInstance().isNumericExpression((Expression) le,(Expression) re);
+	                                                              RESULT = SemanticImpl.getInstance().getExpression((Expression) le,  "+", (Expression) re); :}
 	| additive_expression:le MINUS multiplicative_expression:re {: RESULT = SemanticImpl.getInstance().getExpression((Expression) le,  "-", (Expression) re); :}
 	;
 
@@ -247,7 +248,9 @@ assignment_operator
 	;
 
 expression
-	::= assignment_expression:e {: Logger.print("Line 223"); RESULT =  ListCreator.newList(e); :}
+	::= assignment_expression:e {: Logger.print("Line 223");
+                                 RESULT =  ListCreator.newList(e);
+                                 SemanticImpl.getCodeGenerator().generateLDCode((Expression) e);:}
 	| expression:e COMMA assignment_expression:el {: Logger.print("Line 224"); ((ArrayList<Expression>) el).add((Expression)e); RESULT = e; :}
 	;
 
@@ -255,6 +258,7 @@ constant_expression
 	::= conditional_expression {: Logger.print("Line 228"); :}	/* with constraints */
 	;
 
+// Declaração de variáveis, certamente devem ser incorporadas ações aqui
 declaration
 	::= declaration_specifiers:ds SEMICOLON {: Logger.print("Line 232"); SemanticImpl.getInstance().addVariablesFromTempList((Type) ds); :}
 	| declaration_specifiers:ds init_declarator_list:idl /*{:
@@ -263,20 +267,22 @@ declaration
           ((XMLElement)idl).selectById("identifier"))
 		        Parser.addType(((Terminal)e).value().toString());
 	  }
-	  :}*/ SEMICOLON {: Logger.print("Line 239"); SemanticImpl.getInstance().addVariablesFromTempList((Type) ds); :}
+	  :}*/ SEMICOLON {: Logger.print("declaration_specifiers Line 239"); SemanticImpl.getInstance().addVariablesFromTempList((Type) ds);:}
 	| static_assert_declaration {: Logger.print("Line 240"); :}
 	;
 
+// Não sei se isso tá certo, mas vamo fazendo
 declaration_specifiers
-	::= storage_class_specifier declaration_specifiers:t	{:	RESULT = t; :}
+	::=
+  storage_class_specifier:scs declaration_specifiers:ds
 	| storage_class_specifier
-	| type_specifier declaration_specifiers
-	| type_specifier:t {: Logger.print("Line 239"); RESULT = t; :}
-	| type_qualifier declaration_specifiers
+	| type_specifier:ts declaration_specifiers:ds
+	| type_specifier:t {: Logger.print("type_specifier at Line 239"); RESULT = t; :}
+	| type_qualifier:tq declaration_specifiers:ds
 	| type_qualifier
-	| function_specifier declaration_specifiers
+	| function_specifier:fs declaration_specifiers:ds
 	| function_specifier
-	| alignment_specifier declaration_specifiers
+	| alignment_specifier:as declaration_specifiers:ds // ver a necessidade de verificação de tipos aqui
 	| alignment_specifier
 	;
 
@@ -286,8 +292,14 @@ init_declarator_list
 	;
 
 init_declarator
-	::= declarator:id EQUALS initializer:ep {: Variable v = new Variable((String) id, new Type("null"), (Expression) ep); SemanticImpl.getInstance().addVariableToTempList(v); RESULT=v; :}
-	| declarator:id {: Variable v = new Variable((String) id, new Type("null"));SemanticImpl.getInstance().addVariableToTempList(v);RESULT=v; :}
+	::= declarator:id EQUALS initializer:ep {:
+                                            Variable v = new Variable((String) id, new Type("null"), (Expression) ep);
+                                            SemanticImpl.getInstance().addVariableToTempList(v); RESULT=v;
+                                            :}
+	| declarator:id {:
+                    Variable v = new Variable((String) id, new Type("null"));
+                    SemanticImpl.getInstance().addVariableToTempList(v);RESULT=v;
+                    :}
 	;
 
 storage_class_specifier
@@ -310,7 +322,7 @@ type_specifier
 	| SIGNED {:RESULT = new Type("signed"); Logger.print("SIGNED at line 283");:}
 	| UNSIGNED {:RESULT = new Type("unsigned"); Logger.print("UNSIGNED at line 284");:}
 	| BOOL {:RESULT = new Type("bool"); Logger.print("BOOL at line 285");:}
-	| COMPLEX
+	| COMPLEX {:RESULT = new Type("complex"); Logger.print("COMPLEX at line 286");:}
 	| IMAGINARY  	/* non-mandated extension */
 	| atomic_type_specifier:ats {:Type t = new Type((String) ats); RESULT = t; Logger.print("line 288");:}
 	| struct_or_union_specifier:sous {:Type t = new Type((String) sous); RESULT = t;; Logger.print("line 289");:}
@@ -376,9 +388,9 @@ enumerator	/* identifiers must be flagged as ENUMERATION_CONSTANT */
 	| enumeration_constant
 	;
 
-/*atomic_type_specifier
+atomic_type_specifier
 	::= ATOMIC LPAREN type_name RPAREN
-	;*/
+	;
 
 type_qualifier
 	::= CONST
@@ -404,19 +416,19 @@ declarator
 
 direct_declarator
 	::= IDENTIFIER:id {: Logger.print("Line 380"); RESULT = id; :}
-	| LPAREN declarator RPAREN
-	| direct_declarator LBRA RBRA
-	| direct_declarator LBRA STAR RBRA
-	| direct_declarator LBRA STATIC type_qualifier_list assignment_expression RBRA
-	| direct_declarator LBRA STATIC assignment_expression RBRA
-	| direct_declarator LBRA type_qualifier_list STAR RBRA
-	| direct_declarator LBRA type_qualifier_list STATIC assignment_expression RBRA
-	| direct_declarator LBRA type_qualifier_list assignment_expression RBRA
-	| direct_declarator LBRA type_qualifier_list RBRA
-	| direct_declarator LBRA assignment_expression RBRA
-	| direct_declarator:id LPAREN parameter_type_list:parameter_list RPAREN
-	| direct_declarator LPAREN RPAREN
-	| direct_declarator LPAREN identifier_list RPAREN
+	| LPAREN declarator RPAREN {: Logger.print("Line 381"); :}
+	| direct_declarator LBRA RBRA {: Logger.print("Line 382"); :}
+	| direct_declarator LBRA STAR RBRA {: Logger.print("Line 383"); :}
+	| direct_declarator LBRA STATIC type_qualifier_list assignment_expression RBRA {: Logger.print("Line 383"); :}
+	| direct_declarator LBRA STATIC assignment_expression RBRA {: Logger.print("Line 384"); :}
+	| direct_declarator LBRA type_qualifier_list STAR RBRA {: Logger.print("Line 385"); :}
+	| direct_declarator LBRA type_qualifier_list STATIC assignment_expression RBRA {: Logger.print("Line 386"); :}
+	| direct_declarator LBRA type_qualifier_list assignment_expression RBRA {: Logger.print("Line 387"); :}
+	| direct_declarator LBRA type_qualifier_list RBRA {: Logger.print("Line 388"); :}
+	| direct_declarator LBRA assignment_expression RBRA {: Logger.print("Line 389"); :}
+	| direct_declarator:id LPAREN parameter_type_list:parameter_list RPAREN {: Logger.print("Line 390"); :}
+	| direct_declarator LPAREN RPAREN {: Logger.print("Line 391"); :}
+	| direct_declarator LPAREN identifier_list RPAREN {: Logger.print("Line 392"); :}
 	;
 
 pointer
@@ -438,12 +450,12 @@ parameter_type_list
 	;
 
 parameter_list
-	::= parameter_declaration:p {:Logger.print("Line 422"); RESULT =  ListCreator.newList(p);:}
+	::= parameter_declaration:p {:Logger.print("parameter_declaration at Line 422"); RESULT =  ListCreator.newList(p);:}
 	| parameter_list:pl COMMA parameter_declaration:p {: ((ArrayList<Parameter>) pl).add(0, (Parameter) p); RESULT = pl; :}
 	;
 
 parameter_declaration
-	::= declaration_specifiers:t declarator:id {: Variable v = new Variable((String) id, (Type) t);RESULT = v; :}
+	::= declaration_specifiers:t declarator:id {: Variable v = new Variable((String) id, (Type) t); RESULT = v; :}
 	| declaration_specifiers abstract_declarator
 	| declaration_specifiers
 	;
@@ -560,6 +572,7 @@ selection_statement
 	| SWITCH LPAREN expression RPAREN statement
 	;
 
+// COMANDO FOR, provavelmente algumas ações virão aqui !!!
 iteration_statement
 	::= WHILE LPAREN expression RPAREN statement
 	| DO statement WHILE LPAREN expression RPAREN SEMICOLON
@@ -578,8 +591,8 @@ jump_statement
 	;
 
 translation_unit
-	::= external_declaration
-	| translation_unit external_declaration
+	::= external_declaration {: SemanticImpl.getInstance().getCodeGenerator().generateFinalAssemblyCode();:}
+	| translation_unit external_declaration {: SemanticImpl.getInstance().getCodeGenerator().generateFinalAssemblyCode();:}
 	;
 
 external_declaration
@@ -587,13 +600,16 @@ external_declaration
 	| declaration
 	;
 
-function_definition ::=declaration_specifiers declarator declaration_list
-    compound_statement		                 // {: Parser.deleteScope(); :}
-  	| declaration_specifiers declarator 	 // {: Parser.newScope(); :}
+// Declaração de FUNÇÂO, inserir ações de geração possivelmente aqui
+// acho que estão faltando os parênteses para o reconhecimento da função
+// Vou modificar pra poder incorporar isso
+function_definition ::=
+    declaration_specifiers declarator LPAREN declaration_list RPAREN compound_statement		                 // {: Parser.deleteScope(); :}
+  	| declaration_specifiers declarator LPAREN RPAREN 	 // {: Parser.newScope(); :}
   	  compound_statement 	                 // {: Parser.deleteScope(); :}
-  	| declarator declaration_list 	       // {: Parser.newScope(); :}
+  	| declarator LPAREN declaration_list RPAREN       // {: Parser.newScope(); :}
   	  compound_statement	                 // {: Parser.deleteScope(); :}
-  	| declarator                           // {: Parser.newScope(); :}
+  	| declarator LPAREN RPAREN                          // {: Parser.newScope(); :}
   	  compound_statement 	                 // {: Parser.deleteScope(); :}
   	;
 
