@@ -22,7 +22,7 @@ public class CodeGenerator {
 	private String assemblyCode;
 	private Register[] registers;
 	private Map<String, Integer> functionAddres;
-	
+
 	public CodeGenerator() {
 		this.labels = 100;
 		this.register = 0;
@@ -50,7 +50,101 @@ public class CodeGenerator {
 		}
 		System.out.println(assemblyCode);
 	}
+	/*ADD CODE */
 
+	public void generateADDCode() {  /*pq sem?*/
+		labels += 8;
+
+		Register one = registers[register - 1];
+		Register two = allocateRegister();
+
+		register++;
+		Register result = allocateRegister();
+		addCode(labels + ": ADD " + result + ", " + one + ", " + two);
+	}
+	public void generateADDCode(Register r1, Register r2) {
+		labels += 8;
+
+		register++;
+		Register result = allocateRegister();
+		addCode(labels + ": ADD " + result + ", " + r1 + ", " + r2);
+	}
+
+	public void generateADDCode(Register result, Register one, Register two) {
+		labels += 8;
+		addCode(labels + ": ADD " + result + ", " + one + ", " + two);
+	}
+
+	public void generateADDCode(Register result, Register one, Expression exp) { /*exp? se sim, pq só o primeiro é registrador?*/
+		labels += 8;
+		addCode(labels + ": ADD " + result + ", " + one + ", #" + exp.getAssemblyValue());
+	}
+
+	/*SUB CODE*/
+
+	public void generateSUBCode(Register r1, Register r2) {
+		labels += 8;
+
+		register++;
+		Register result = allocateRegister();
+		addCode(labels + ": SUB " + result + ", " + r1 + ", " + r2);
+	}
+
+	public void generateSUBCode(Register result, Register one, Expression exp) {
+		labels += 8;
+		addCode(labels + ": SUB " + result + ", " + one + ", #" + exp.getAssemblyValue());
+	}
+
+	public void generateSUBCode(Register result, Register one, Register two) {
+		labels += 8;
+		addCode(labels + ": SUB " + result + ", " + one + ", " + two);
+	}
+
+	/*MUL CODE*/
+	public void generateMULCode() { /*sem parm again*/
+		labels += 8;
+
+		Register one = registers[register - 1];
+		Register two = allocateRegister();
+
+		register++;
+		Register result = allocateRegister();
+		addCode(labels + ": MUL " + result + ", " + one + ", " + two);
+	}
+
+	public void generateMULCode(Register r1, Register r2) {
+		labels += 8;
+
+		register++;
+		Register result = allocateRegister();
+		addCode(labels + ": MUL " + result + ", " + r1 + ", " + r2);
+	}
+
+	public void generateMULCode(Register result, Register one, Expression exp) {
+		labels += 8;
+		addCode(labels + ": MUL " + result + ", " + one + ", #" + exp.getValue());
+	}
+
+	public void generateMULNegativeCode() {
+		labels += 8;
+
+		Register one = allocateRegister();
+
+		register++;
+		Register result = allocateRegister();
+		addCode(labels + ": MUL " + result + ", " + one + ", #-1");
+	}
+
+	/*DIV CODE*/
+	public void generateDIVCode(Register r1, Register r2) {
+		labels += 8;
+
+		register++;
+		Register result = allocateRegister();
+		addCode(labels + ": DIV " + result + ", " + r1 + ", " + r2);
+	}
+
+	/*AND CODE*/
 	public void generateANDCode(Register r1, Register r2) {
 		labels += 8;
 
@@ -59,6 +153,42 @@ public class CodeGenerator {
 		addCode(labels + ": AND " + result + ", " + r1 + ", " + r2);
 	}
 
+	/*OR CODE*/
+	public void generateORCode(Register r1, Register r2) {
+		labels += 8;
+
+		register++;
+		Register result = allocateRegister();
+		addCode(labels + ": OR " + result + ", " + r1 + ", " + r2);
+	}
+
+	/*XOR CODE*/
+	public void generateXORCode(Register r1, Register r2) {
+		labels += 8;
+
+		register++;
+		Register result = allocateRegister();
+		addCode(labels + ": XOR " + result + ", " + r1 + ", " + r2);
+	}
+
+	public void generateBaseNOTCode(Register r1) {
+		labels += 8;
+
+		register++;
+		Register result = allocateRegister();
+		addCode(labels + ": XOR " + result + ", " + r1 + ", #true");
+	}
+
+	/*MOD CODE*/
+	public void generateMODCode(Register r1, Register r2) {
+		labels += 8;
+
+		register++;
+		Register result = allocateRegister();
+		addCode(labels + ": MOD " + result + ", " + r1 + ", " + r2);
+	}
+
+	/*EQ CODE*/
 	public void generateANDEQCode(Register r1, Expression e) {
 		generateANDCode(r1, e.getRegister());
 		generateSTCode(r1, e);
@@ -90,127 +220,7 @@ public class CodeGenerator {
 		generateSTCode(e1);
 	}
 
-	public void generateORCode(Register r1, Register r2) {
-		labels += 8;
-
-		register++;
-		Register result = allocateRegister();
-		addCode(labels + ": OR " + result + ", " + r1 + ", " + r2);
-	}
-
-	public void generateXORCode(Register r1, Register r2) {
-		labels += 8;
-
-		register++;
-		Register result = allocateRegister();
-		addCode(labels + ": XOR " + result + ", " + r1 + ", " + r2);
-	}
-
-	public void generateBaseNOTCode(Register r1) {
-		labels += 8;
-
-		register++;
-		Register result = allocateRegister();
-		addCode(labels + ": XOR " + result + ", " + r1 + ", #true");
-	}
-
-	public void generateADDCode() {
-		labels += 8;
-
-		Register one = registers[register - 1];
-		Register two = allocateRegister();
-
-		register++;
-		Register result = allocateRegister();
-		addCode(labels + ": ADD " + result + ", " + one + ", " + two);
-	}
-
-	public void generateADDCode(Register r1, Register r2) {
-		labels += 8;
-
-		register++;
-		Register result = allocateRegister();
-		addCode(labels + ": ADD " + result + ", " + r1 + ", " + r2);
-	}
-
-	public void generateADDCode(Register result, Register one, Register two) {
-		labels += 8;
-		addCode(labels + ": ADD " + result + ", " + one + ", " + two);
-	}
-
-	public void generateADDCode(Register result, Register one, Expression exp) {
-		labels += 8;
-		addCode(labels + ": ADD " + result + ", " + one + ", #" + exp.getAssemblyValue());
-	}
-
-	public void generateSUBCode(Register r1, Register r2) {
-		labels += 8;
-
-		register++;
-		Register result = allocateRegister();
-		addCode(labels + ": SUB " + result + ", " + r1 + ", " + r2);
-	}
-
-	public void generateSUBCode(Register result, Register one, Expression exp) {
-		labels += 8;
-		addCode(labels + ": SUB " + result + ", " + one + ", #" + exp.getAssemblyValue());
-	}
-	
-	public void generateSUBCode(Register result, Register one, Register two) {
-		labels += 8;
-		addCode(labels + ": SUB " + result + ", " + one + ", " + two);
-	}
-
-	public void generateMULNegativeCode() {
-		labels += 8;
-
-		Register one = allocateRegister();
-
-		register++;
-		Register result = allocateRegister();
-		addCode(labels + ": MUL " + result + ", " + one + ", #-1");
-	}
-
-	public void generateMULCode() {
-		labels += 8;
-
-		Register one = registers[register - 1];
-		Register two = allocateRegister();
-
-		register++;
-		Register result = allocateRegister();
-		addCode(labels + ": MUL " + result + ", " + one + ", " + two);
-	}
-
-	public void generateMULCode(Register r1, Register r2) {
-		labels += 8;
-
-		register++;
-		Register result = allocateRegister();
-		addCode(labels + ": MUL " + result + ", " + r1 + ", " + r2);
-	}
-
-	public void generateMODCode(Register r1, Register r2) {
-		labels += 8;
-
-		register++;
-		Register result = allocateRegister();
-		addCode(labels + ": MOD " + result + ", " + r1 + ", " + r2);
-	}
-	
-	public void generateDIVCode(Register r1, Register r2) {
-		labels += 8;
-
-		register++;
-		Register result = allocateRegister();
-		addCode(labels + ": DIV " + result + ", " + r1 + ", " + r2);
-	}
-
-	public void generateMULCode(Register result, Register one, Expression exp) {
-		labels += 8;
-		addCode(labels + ": MUL " + result + ", " + one + ", #" + exp.getValue());
-	}
-
+	/*NOT CODE*/
 	public void generateNOTCode() {
 		generateBEQZCode(4);
 		generateMULCode(Register.R2, Register.R1, new Expression(new Type("int"), "-1"));
@@ -219,6 +229,7 @@ public class CodeGenerator {
 		generateADDCode(Register.R1, Register.R1, new Expression(new Type("int"), "1"));
 	}
 
+	/*BRANCH CODE*/
 	public void generateBEQZCode(int br) {
 		labels += 8;
 		int jump = (br * 8) + labels;
@@ -226,7 +237,7 @@ public class CodeGenerator {
 		Register current = allocateRegister();
 		addCode(labels + ": BEQZ " + current + ", " + jump);
 	}
-	
+
 	public void generateBNEQZCode(int br) {
 		labels += 8;
 		int jump = (br * 8) + labels;
@@ -234,7 +245,7 @@ public class CodeGenerator {
 		Register current = allocateRegister();
 		addCode(labels + ": BNEQZ " + current + ", " + jump);
 	}
-	
+
 	public void generateBNEQZCodeCase() {
 		Expression e = new Expression("int");
 		e.setAssemblyValue("0");
@@ -245,7 +256,7 @@ public class CodeGenerator {
 		Register two = allocateRegister();
 		addCode(labels + ": BNE " + one + ", " + two + ", #caseEnd");
 	}
-	
+
 	public void generateBGEQZCode(int br) {
 		labels += 8;
 		int jump = (br * 8) + labels;
@@ -253,7 +264,7 @@ public class CodeGenerator {
 		Register current = allocateRegister();
 		addCode(labels + ": BGEQZ " + current + ", " + jump);
 	}
-	
+
 	public void generateBLEQZCode(int br) {
 		labels += 8;
 		int jump = (br * 8) + labels;
@@ -261,7 +272,7 @@ public class CodeGenerator {
 		Register current = allocateRegister();
 		addCode(labels + ": BLEQZ " + current + ", " + jump);
 	}
-	
+
 	public void generateBLTZCode(int br) {
 		labels += 8;
 		int jump = (br * 8) + labels;
@@ -269,7 +280,7 @@ public class CodeGenerator {
 		Register current = allocateRegister();
 		addCode(labels + ": BLTZ " + current + ", " + jump);
 	}
-	
+
 	public void generateBGTZCode(int br) {
 		labels += 8;
 		int jump = (br * 8) + labels;
@@ -283,7 +294,17 @@ public class CodeGenerator {
 		int jump = (br * 8) + labels;
 		addCode(labels + ": BR " + jump);
 	}
+	public void generateBRCode(Integer address) {
+		labels += 8;
+		addCode(labels + ": BR " + address);
+	}
 
+	public void generateBRCode(Register register) {
+		labels += 8;
+		addCode(labels + ": BR " + register);
+	}
+
+	/*LOAD CASE*/
 	public Register generateLDCode(Expression expression) {
 		Register r = null;
 		if (expression.getAssemblyValue() != null) {
@@ -295,7 +316,7 @@ public class CodeGenerator {
 		}
 		return r;
 	}
-	
+
 	public Register generateLDCode(Variable var) {
 		Register r = null;
 		if (var.getIdentifier() != null) {
@@ -307,7 +328,7 @@ public class CodeGenerator {
 		}
 		return r;
 	}
-	
+
 	public Register generateLDCode(Register r, Expression expression) {
 		if (expression.getAssemblyValue() != null) {
 			labels += 8;
@@ -317,6 +338,7 @@ public class CodeGenerator {
 		return r;
 	}
 
+	/*STORE CODE*/
 	public void generateSTCode(Variable variable) {
 		labels += 8;
 		addCode(labels + ": ST " + variable.getIdentifier() + ", " + allocateRegister());
@@ -334,6 +356,8 @@ public class CodeGenerator {
 		addCode(labels + ": ST " + exp.getAssemblyValue() + ", " + allocateRegister());
 		this.register = this.lastRegisterUsed;
 	}
+
+	///////////////////////////////////////////////////////////////////////////////////
 
 	public void addCode(String assemblyString) {
 		assemblyCode += assemblyString + "\n";
@@ -354,19 +378,9 @@ public class CodeGenerator {
 		generateSUBCode(Register._SP, Register.SP, blockSize);
 	}
 
-	public void generateBRCode(Integer address) {
-		labels += 8;
-		addCode(labels + ": BR " + address);
-	}
-
-	public void generateBRCode(Register register) {
-		labels += 8;
-		addCode(labels + ": BR " + register);
-	}
-
 	public void generateHalt() {
 		labels += 8;
-		addCode(labels + ": halt");
+		addCode(labels + ": HALT");
 	}
 
 	public String getAssemblyCode() {
@@ -383,7 +397,7 @@ public class CodeGenerator {
 		if (returnedExpression.getValue() != null) {
 			generateLDCode(returnedExpression);
 			generateSTCode(new Expression(function.getName()));
-			
+
 			if(function.getName().equals("main")){
 				generateHalt();
 			} else {
@@ -399,25 +413,25 @@ public class CodeGenerator {
 			generateBRCode(Register._SP);
 		}
 	}
-	
+
 	public Register getLastRegister() {
 		return allocateRegister();
 	}
-	
+
 	public Register allocateRegister(){
 		try {
 			Register allocated = registers[register];
 			return allocated;
 		} catch (Exception e) {
-			register++; 
+			register++;
 			return allocateRegister();
 		}
 	}
-	
+
 	public void lastRegisterUsed(int register) {
 		this.lastRegisterUsed = register;
 	}
-	
+
 	public int getLabels(){
 		return labels;
 	}
@@ -427,5 +441,5 @@ public class CodeGenerator {
 		writer.write(assemblyCode);
 		writer.close();
 	}
-	
+
 }
