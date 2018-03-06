@@ -66,7 +66,7 @@ start with translation_unit;
 primary_expression ::= IDENTIFIER:i {:Logger.print("Line 66"); RESULT = i;:}
   | constant:c {: RESULT=c; :}
   | string:s {: Expression ep = new Expression(new Type("char"),(String) s); RESULT=ep; :}
-  | LPAREN expression RPAREN
+  | LPAREN expression:ep RPAREN {:Logger.print("Line 69"); RESULT = ep;:}
   | generic_selection
   ;
 
@@ -78,7 +78,8 @@ constant ::= I_CONSTANT:c {: RESULT=new Expression(new Type("int"), c.toString()
 enumeration_constant ::= IDENTIFIER:i {:Logger.print("Line 78"); RESULT = i;:}
 ;
 
-string ::= STRING_LITERAL:s {: RESULT=s; :}
+string ::= STRING_LITERAL:s {: Expression ep = new Expression(new Type("char"),(String) s);
+RESULT = ep; :}
 	         | FUNC_NAME
 	          ;
 
@@ -141,7 +142,16 @@ unary_operator
 	;
 
 cast_expression
-	::= unary_expression:ep {: RESULT=ep; :}
+	::= unary_expression:ep {:	if (ep instanceof String) {
+                          						Variable v = SemanticImpl.getInstance().findVariableByIdentifier((String) ep);
+                          						if (v.getValue() != null) {
+                            						RESULT = v.getValue();
+                          						} else {
+                            						RESULT = new Expression((Type) v.getType());
+                    							           }
+  											  					} else {
+                              					RESULT = ep;
+                            					}	:}
 	| LPAREN type_name RPAREN cast_expression
 	;
 
@@ -210,16 +220,25 @@ conditional_expression
 
 assignment_expression
 	::= conditional_expression:ep {: Logger.print("Line 205"); RESULT=ep; :}
-	| unary_expression assignment_operator assignment_expression
+	| unary_expression:id assignment_operator:op assignment_expression:e {: Logger.print("Line 205");
+                                                        Variable var;
+                                                        if (id instanceof String) {
+                                                                                    SemanticImpl.getInstance().checkVariableAttribution((String) id, (Expression) e);
+                                                          var = SemanticImpl.getInstance().findVariableByIdentifier((String) id);
+                                                          var.setValue((Expression) e);
+                                                          RESULT = e;
+                                                        } else {
+                                                          RESULT = e;
+                                                        } :}
 	;
 
 assignment_operator
 	::= EQUALS
-	| MUL_ASSIGN
-	| DIV_ASSIGN
-	| MOD_ASSIGN
-	| ADD_ASSIGN
-	| SUB_ASSIGN
+	| MUL_ASSIGN {:	RESULT = "*";	:}
+	| DIV_ASSIGN {:	RESULT = "/";	:}
+	| MOD_ASSIGN {:	RESULT = "%";	:}
+	| ADD_ASSIGN {:	RESULT = "+";	:}
+	| SUB_ASSIGN {:	RESULT = "-";	:}
 	| LEFT_ASSIGN
 	| RIGHT_ASSIGN
 	| AND_ASSIGN
@@ -237,7 +256,7 @@ constant_expression
 	;
 
 declaration
-	::= declaration_specifiers SEMICOLON {: Logger.print("Line 232"); :}
+	::= declaration_specifiers:ds SEMICOLON {: Logger.print("Line 232"); SemanticImpl.getInstance().addVariablesFromTempList((Type) ds); :}
 	| declaration_specifiers:ds init_declarator_list:idl /*{:
 	  if (ds.toString().indexOf(">typedef<")>0) {
 	      for (XMLElement e:
@@ -249,7 +268,7 @@ declaration
 	;
 
 declaration_specifiers
-	::= storage_class_specifier declaration_specifiers
+	::= storage_class_specifier declaration_specifiers:t	{:	RESULT = t; :}
 	| storage_class_specifier
 	| type_specifier declaration_specifiers
 	| type_specifier:t {: Logger.print("Line 239"); RESULT = t; :}
