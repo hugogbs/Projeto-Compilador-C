@@ -64,6 +64,7 @@ precedence nonassoc ELSE;
 start with translation_unit;
 
 primary_expression ::= IDENTIFIER:id {: Variable var = SemanticImpl.getInstance().getVariableById(id.toString());
+                                        Logger.print("primary_expression"); Logger.print(var.toString());
                                         if (var == null) {
                                             Expression e = new Expression(null, null);
                                             var = new Variable(id.toString(), null, e);
@@ -105,14 +106,14 @@ generic_association
 	;
 // a++ a--
 postfix_expression
-	::= primary_expression
-	| postfix_expression LBRA expression RBRA
-	| postfix_expression LPAREN RPAREN
-	| postfix_expression LPAREN argument_expression_list RPAREN
-	| postfix_expression DOT IDENTIFIER
-	| postfix_expression PTR_OP IDENTIFIER
-	| postfix_expression INC_OP
-	| postfix_expression DEC_OP
+	::= primary_expression:pe {:RESULT = pe;:}
+	| primary_expression:pe LBRA expression RBRA {:RESULT = pe;:}
+	| primary_expression:pe LPAREN RPAREN {:RESULT = pe; :}
+	| primary_expression:pe LPAREN argument_expression_list RPAREN
+	| primary_expression:pe DOT IDENTIFIER
+	| primary_expression:pe PTR_OP IDENTIFIER
+	| primary_expression:pe INC_OP
+	| primary_expression:pe DEC_OP
 	| LPAREN type_name RPAREN LKEY initializer_list RKEY
 	| LPAREN type_name RPAREN LKEY initializer_list COMMA RKEY
 	;
@@ -152,7 +153,7 @@ cast_expression
 
 	| LPAREN type_name:tn RPAREN cast_expression:cep
 	;
-
+// Provavelmente falta colocar o result aqui
 multiplicative_expression
 	::= cast_expression:cep  {: RESULT = (Expression) cep; :}
 	| multiplicative_expression:mep STAR:st cast_expression:cep {:
@@ -167,7 +168,7 @@ multiplicative_expression
 
 additive_expression
 	::= multiplicative_expression
-	| additive_expression:aep PLUS multiplicative_expression:mep
+	| additive_expression:aep PLUS:ps multiplicative_expression:mep {: SemanticImpl.getInstance().generateBaseOpCode((String) ps, (Expression) aep, (Expression) aep);:}
 	| additive_expression:aep MINUS:mn multiplicative_expression:mep {:
                                                                       SemanticImpl.getInstance().generateBaseOpCode((String) mn, (Expression) aep, (Expression) aep);:}
 	;
@@ -251,7 +252,7 @@ assignment_operator
 	;
 
 expression
-	::= assignment_expression:aep {: Logger.print("Line 223"); :} //RESULT =  ListCreator.newList(aep);
+	::= assignment_expression:aep {: Logger.print("Line 223"); RESULT = aep; :} //RESULT =  ListCreator.newList(aep);
 	| expression:ep COMMA assignment_expression:aep {: Logger.print("Line 224"); :} //((ArrayList<Expression>) aep).add((Expression)ep); RESULT = ep;
 	;
 
@@ -259,15 +260,10 @@ constant_expression
 	::= conditional_expression {: Logger.print("Line 228"); :}	/* with constraints */
 	;
 
+// É preciso uma verificação de declaração de variáveis aqui, provavelmente.
 declaration
 	::= declaration_specifiers SEMICOLON {: Logger.print("Line 232"); :}
-	| declaration_specifiers:ds init_declarator_list:idl /*{:
-	  if (ds.toString().indexOf(">typedef<")>0) {
-	      for (XMLElement e:
-          ((XMLElement)idl).selectById("identifier"))
-		        Parser.addType(((Terminal)e).value().toString());
-	  }
-	  :}*/ SEMICOLON {: Logger.print("Line 239"); :}
+	| declaration_specifiers:ds init_declarator_list:idl SEMICOLON {: Logger.print("Line 239"); :}
 	| static_assert_declaration {: Logger.print("Line 240"); :}
 	;
 
@@ -275,7 +271,7 @@ declaration_specifiers
 	::= storage_class_specifier declaration_specifiers
 	| storage_class_specifier
 	| type_specifier declaration_specifiers
-	| type_specifier
+	| type_specifier:ts {:RESULT = ts;:}
 	| type_qualifier declaration_specifiers
 	| type_qualifier
 	| function_specifier declaration_specifiers
@@ -285,13 +281,19 @@ declaration_specifiers
 	;
 
 init_declarator_list
-	::= init_declarator
-	| init_declarator_list COMMA init_declarator
+	::= init_declarator:id {:RESULT = id;:}
+	| init_declarator_list:idl COMMA init_declarator:id {:RESULT = id;:}
 	;
 
+// Verificar necessidade de geração de código aqui
 init_declarator
-	::= declarator EQUALS initializer
-	| declarator
+	::= declarator:d EQUALS initializer:i {: Logger.print("init_declarator"); Logger.print(d.toString());
+	                                         Variable v = (Variable) d;
+	                                         v.setValue((Expression) i);
+	                                         v.setType(((Expression) i).getType());
+	                                         SemanticImpl.getInstance().addVariable(v);
+	                                         RESULT = v; :}
+	| declarator:d {:RESULT = d;:}
 	;
 
 storage_class_specifier
@@ -405,7 +407,7 @@ alignment_specifier
 
 declarator
 	::= pointer direct_declarator
-	| direct_declarator
+	| direct_declarator:d {: RESULT = d; :}
 	;
 
 direct_declarator
@@ -413,9 +415,13 @@ direct_declarator
                    	     if (var != null) {
                    	        SemanticImpl.getInstance().addVariableToTempList(var);
                    	     }
+                          Logger.print("direct_declarator"); Logger.print((String)id);
                    	      Expression exp = new Expression(null, null);
                           Variable v2 = new Variable(id.toString(), null, exp);
+                          Logger.print(v2.getIdentifier());
                           SemanticImpl.getInstance().addVariable(v2);
+                          Logger.print("passou!");
+                          Logger.print(v2.toString());
                           RESULT = v2;
                            :}
 	| LPAREN declarator:d RPAREN {: RESULT = d;:}
@@ -452,10 +458,11 @@ type_qualifier_list
 
 
 parameter_type_list
-	::= parameter_list COMMA ELLIPSIS
-	| parameter_list
+	::= parameter_list:pl COMMA ELLIPSIS:id {:RESULT =pl;:}
+	| parameter_list:pl {:RESULT =pl;:}
 	;
 
+// Faltam ações para os parâmetros
 parameter_list
 	::= parameter_declaration
 	| parameter_list COMMA parameter_declaration
@@ -540,11 +547,11 @@ static_assert_declaration
 
 statement
 	::= labeled_statement
-	| /*{: Parser.newScope(); :}*/ compound_statement //{: Parser.deleteScope(); :}
-	| expression_statement
-	| selection_statement
-	| iteration_statement
-	| jump_statement
+	|  compound_statement // {: Parser.newScope(); :} compound_statement {: Parser.deleteScope(); :}
+	| expression_statement:es {: RESULT = es; :}
+	| selection_statement:ss {: RESULT = ss; :}
+	| iteration_statement:is {:RESULT = is;:}
+	| jump_statement:js {:RESULT = js;:}
 	;
 
 labeled_statement
@@ -570,7 +577,7 @@ block_item
 
 expression_statement
 	::= SEMICOLON
-	| expression SEMICOLON
+	| expression:e SEMICOLON {: RESULT= e;:}
 	;
 
 selection_statement
@@ -597,8 +604,8 @@ jump_statement
 	;
 
 translation_unit
-	::= external_declaration
-	| translation_unit external_declaration
+	::= external_declaration:ed {:SemanticImpl.getInstance().getCodeGenerator().generateFinalAssemblyCode();:}
+	| translation_unit:tu external_declaration:ed {:RESULT = ed; SemanticImpl.getInstance().getCodeGenerator().generateFinalAssemblyCode();:}
 	;
 
 external_declaration

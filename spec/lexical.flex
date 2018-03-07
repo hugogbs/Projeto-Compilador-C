@@ -1,7 +1,10 @@
 package compiler.generated;
 import java_cup.runtime.*;
 import compiler.core.*;
-
+import java_cup.runtime.ComplexSymbolFactory.ComplexSymbol;
+import java_cup.runtime.ComplexSymbolFactory.Location;
+import java_cup.runtime.ComplexSymbolFactory;
+import java_cup.runtime.Symbol;
 %%
 
 %public
@@ -15,13 +18,29 @@ import compiler.core.*;
 %{
    StringBuffer string = new StringBuffer();
 
-  private Symbol symbol(int type) {
+   private ComplexSymbolFactory symbolFactory = new ComplexSymbolFactory();
+
+   private Symbol symbol(int sym) {
+         return symbolFactory.newSymbol("sym", sym, new Location(yyline+1,yycolumn+1), new Location(yyline+1,yycolumn+yylength()));
+     }
+     private Symbol symbol(int sym, Object val) {
+         Location left = new Location(yyline+1,yycolumn+1);
+         Location right= new Location(yyline+1,yycolumn+yylength());
+         return symbolFactory.newSymbol("sym", sym, left, right,val);
+     }
+     private Symbol symbol(int sym, Object val,int buflength) {
+         Location left = new Location(yyline+1,yycolumn+yylength()-buflength);
+         Location right= new Location(yyline+1,yycolumn+yylength());
+         return symbolFactory.newSymbol("sym", sym, left, right,val);
+     }
+
+  /*private Symbol symbol(int type) {
 	return new JavaSymbol(type, yyline+1, yycolumn+1);
   }
 
   private Symbol symbol(int type, Object value) {
 	return new JavaSymbol(type, yyline+1, yycolumn+1, value);
-  }
+  } */
 
   private long parseLong(int start, int end, int radix) {
 	long result = 0;
@@ -50,15 +69,15 @@ WhiteSpace     = {LineTerminator} | [ \t\f  ]
 
 Printable      = [ -~]
 
-Any            = . | \n
+Any            = [^] | \n
 
 %%
 
 <YYINITIAL> {
 
   /* Keywords */
-  "auto" { return symbol(sym.AUTO); }
-  "double" {return symbol(sym.DOUBLE); }
+  "auto"        { return symbol(sym.AUTO); }
+  "double"      {return symbol(sym.DOUBLE); }
   "int" {return symbol(sym.INT); }
   "struct" {return symbol(sym.STRUCT); }
   "const" {return symbol(sym.CONST); }
@@ -111,16 +130,16 @@ Any            = . | \n
   {Comments} { /**/ }
 
   /* Identifiers */
-  {Identifier} { return symbol(sym.IDENTIFIER); }
+  {Identifier} { return symbol(sym.IDENTIFIER, yytext()); }
 
   /* Integer */
-  {Integer} {return symbol(sym.I_CONSTANT); }
+  {Integer} {return symbol(sym.I_CONSTANT, yytext()); }
 
   /* Float */
-  {Float} {return symbol(sym.F_CONSTANT); }
+  {Float} {return symbol(sym.F_CONSTANT, yytext()); }
 
   /* String */
-  \"([^\\\"]|\\.)*\" {return symbol(sym.STRING_LITERAL); }
+  \"([^\\\"]|\\.)*\" {return symbol(sym.STRING_LITERAL, yytext()); }
   /* Char */
   /*\'([^\\\"]|\\.)*\' {return symbol(CHAR,yytext()); }*/
 
@@ -174,5 +193,5 @@ Any            = . | \n
   "." {return symbol(sym.DOT); }
   "?" {return symbol(sym.INTER); }
 
-  .|\n			{ throw new RuntimeException("Caractere inválido " + yytext() + " na linha " + yyline + ", coluna " +yycolumn); }
+  [^]|\n			{ throw new RuntimeException("Caractere inválido " + yytext() + " na linha " + yyline + ", coluna " +yycolumn); }
 }
