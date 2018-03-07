@@ -64,4 +64,18 @@ public class Expression {
 	public String getAssemblyValue() {
 		return this.value;
 	}
+
+	public static Type getTypeNumber(String number) {
+		if (number.contains(".")) {
+			return new Type("float");
+		}
+		return new Type("int");
+	}
+
+	public static Object convertNumber(String number) {
+		if (number.contains(".")) {
+			return Float.parseFloat(number);
+		}
+		return Integer.parseInt(number);
+	}
 }

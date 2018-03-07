@@ -32,4 +32,8 @@ public class ScopedEntity extends NamedEntity {
         return types;
     }
 
+    public Variable getVariableById(String id) {
+        return variables.get(id);
+    }
+
 }

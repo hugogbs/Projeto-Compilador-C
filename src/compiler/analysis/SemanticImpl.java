@@ -313,7 +313,7 @@ public class SemanticImpl {
 	 * 
 	 * @throws Exception
 	 */
-	private void addVariable(Variable variable) throws Exception {
+	public void addVariable(Variable variable) throws Exception {
 		if (scopeStack.isEmpty()) {
 			validateVariableGlobal(variable);
 
@@ -336,6 +336,10 @@ public class SemanticImpl {
 		}
 
 		tempVariables = new ArrayList<Variable>();
+	}
+
+	public Variable getVariableById(String id) {
+		return variables.get(id);
 	}
 
 	public void validateFunction(String functionName, ArrayList<Parameter> params, Type declaredType) throws InvalidFunctionException, InvalidParameterException {

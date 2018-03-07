@@ -3,8 +3,8 @@ public class CompilerTest{
 	
 	public void testeAritimetica(){
 		int a = 10 +10 ;
-		float b = 10.0 + 10.0;
-		float c = 10.0 + 10;
+		double b = 10.0 + 10.0;
+		double c = 10.0 + 10;
 		double d = 10 + 10.0;
 		int e = 10 * 10;
 		int f = 10/10;

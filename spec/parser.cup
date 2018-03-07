@@ -63,21 +63,30 @@ precedence nonassoc ELSE;
 
 start with translation_unit;
 
-primary_expression ::= IDENTIFIER
-  | constant
+primary_expression ::= IDENTIFIER:id {: Variable var = SemanticImpl.getInstance().getVariableById(id.toString());
+                                        if (var == null) {
+                                            Expression e = new Expression(null, null);
+                                            var = new Variable(id.toString(), null, e);
+                                            SemanticImpl.getInstance().addVariable(var);
+                                        }
+                                        RESULT = var;
+                                      :}
+  | constant: c {: Expression exp = new Expression(Expression.getTypeNumber(c.toString()), (String) Expression.convertNumber(c.toString()));
+                   RESULT = exp;
+                :}
   | string
-  | LPAREN expression RPAREN
+  | LPAREN expression:e RPAREN {: Expression exp = (Expression) e; RESULT = exp; :}
   | generic_selection
   ;
 
-constant ::= I_CONSTANT
-  | F_CONSTANT
+constant ::= I_CONSTANT:i {: RESULT = new Expression(new Type("int"), i.toString()); :}
+  | F_CONSTANT:f {: RESULT = new Expression(new Type("float"), f.toString()); :}
   | ENUMERATION_CONSTANT
   ;
 
 enumeration_constant ::= IDENTIFIER;
 
-string ::= STRING_LITERAL
+string ::= STRING_LITERAL:s {: RESULT = new Expression(new Type("char"), (String) s); :}
 	         | FUNC_NAME
 	          ;
 
@@ -109,8 +118,8 @@ postfix_expression
 	;
 
 argument_expression_list
-	::= assignment_expression
-	| argument_expression_list COMMA assignment_expression
+	::= assignment_expression:ep {: ArrayList<Expression> el = new ArrayList<Expression>(); el.add((Expression) ep); RESULT = el;:}
+	| argument_expression_list:epl COMMA assignment_expression:ep {: ((ArrayList) epl).add((Expression) ep); RESULT = epl;:}
 	;
 
 unary_expression
@@ -133,21 +142,32 @@ unary_operator
 	;
 
 cast_expression
-	::= unary_expression
-	| LPAREN type_name RPAREN cast_expression
+	::= unary_expression:ep {: if (ep instanceof String) {
+	                              Variable v = SemanticImpl.getInstance().getVariableById((String) ep);
+                                  if (v.getValue() != null) { RESULT = v.getValue(); }
+                                  else { RESULT = new Expression((Type) v.getType(), (String) ep); }
+                         	  }else { RESULT = ep;}	:}
+
+	| LPAREN type_name:t1 RPAREN cast_expression:t2
 	;
 
 multiplicative_expression
-	::= cast_expression  {: Logger.print("Line 141"); :}
-	| multiplicative_expression STAR cast_expression {: Logger.print("Line 142"); :}
-	| multiplicative_expression BAR cast_expression {: Logger.print("Line 143"); :}
-	| multiplicative_expression PERC cast_expression {: Logger.print("Line 144"); :}
+	::= cast_expression:exp  {: RESULT = (Expression) exp; :}
+	| multiplicative_expression:e1 STAR:st cast_expression:e2 {: Logger.print("+");
+	SemanticImpl.getInstance().checkTypeCompatibility(((Expression) e1).getType(), ((Expression) e2).getType()); Logger.print("++");
+	                                                             SemanticImpl.getInstance().generateBaseOpCode(st.toString(), (Expression) e1, (Expression) e2);
+	                                                             Logger.print("+++");:}
+	| multiplicative_expression:e1 BAR:br cast_expression:e2 {: Logger.print("Line 143");
+     	                                                        SemanticImpl.getInstance().generateBaseOpCode((String) br, (Expression) e1, (Expression) e2);:}
+	| multiplicative_expression:e1 PERC:pr cast_expression:e2 {: Logger.print("Line 144");
+     	                                                        SemanticImpl.getInstance().generateBaseOpCode((String) pr, (Expression) e1, (Expression) e2);:}
 	;
 
 additive_expression
 	::= multiplicative_expression
-	| additive_expression PLUS multiplicative_expression
-	| additive_expression MINUS multiplicative_expression
+	| additive_expression:e1 PLUS multiplicative_expression:e2
+	| additive_expression:e1 MINUS:mn multiplicative_expression:e2 {:
+                                                                      SemanticImpl.getInstance().generateBaseOpCode((String) mn, (Expression) e1, (Expression) e2);:}
 	;
 
 shift_expression
@@ -202,7 +222,9 @@ conditional_expression
 
 assignment_expression
 	::= conditional_expression
-	| unary_expression assignment_operator assignment_expression
+	| unary_expression:e1 assignment_operator:op assignment_expression:e2 {: SemanticImpl.getInstance().checkTypeCompatibility(
+	                                                                             ((Expression) e1).getType(),
+	                                                                             ((Expression) e2).getType()); :}
 	;
 
 assignment_operator

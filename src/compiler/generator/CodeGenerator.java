@@ -8,6 +8,7 @@ import java.lang.invoke.SwitchPoint;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.sun.org.apache.bcel.internal.classfile.Code;
 import compiler.core.Expression;
 import compiler.core.Function;
 import compiler.core.Type;
@@ -22,6 +23,7 @@ public class CodeGenerator {
 	private String assemblyCode;
 	private Register[] registers;
 	private Map<String, Integer> functionAddres;
+	private static CodeGenerator codeGen;
 
 	public CodeGenerator() {
 		this.labels = 100;
@@ -32,8 +34,11 @@ public class CodeGenerator {
 		this.functionAddres = new HashMap<String, Integer>();
 	}
 
-	public static Object getInstance() {
-		return null;
+	public static CodeGenerator getInstance() {
+		if (codeGen == null) {
+			codeGen = new CodeGenerator();
+		}
+		return codeGen;
 	}
 	private String initAssemblyCode() {
 		return "100: LD SP, #8000\n";

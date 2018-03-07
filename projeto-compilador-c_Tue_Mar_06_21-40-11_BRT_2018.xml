@@ -90,14 +90,6 @@
   <property name="project.jdk.classpath" value="jdk.classpath.1.8"/>
   
   
-  <!-- Project Libraries -->
-  
-  <path id="library.libs.classpath">
-    <pathelement location="${basedir}/libs/java-cup-11a.jar"/>
-    <pathelement location="${basedir}/libs/jflex-1.6.1.jar"/>
-  </path>
-  
-  
   <!-- Global Libraries -->
   <!-- Register Custom Compiler Taskdefs -->
   <property name="javac2.home" value="${idea.home}/lib"/>
