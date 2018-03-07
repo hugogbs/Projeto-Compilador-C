@@ -194,7 +194,7 @@ init_declarator	::= declarator:id EQUALS initializer:ep	{:	Variable v = new Vari
 constant_expression	::= conditional_expression;
 
 
-assignment_expression	::= conditional_expression:e											{:	Logger.print("assignment_expression ::=	conditional_expression");
+assignment_expression	::= conditional_expression:e	{:	Logger.print("assignment_expression ::=	conditional_expression");
 																									RESULT=e;	:}
 						| unary_expression:id assignment_operator:op assignment_expression:e	{:	Logger.print("assignment_expression ::=	unary_expression assignment_operator assignment_expression"+id+op+e);
 																									Variable var;
@@ -269,7 +269,7 @@ initializer_list	::= designation initializer
 					| initializer_list COMMA initializer;
 
 
-logical_or_expression	::= logical_and_expression:ep
+logical_or_expression	::= logical_and_expression:ep {: RESULT = ep; :}
 						| logical_or_expression:le OR_OP logical_and_expression:re;
 
 
@@ -344,7 +344,7 @@ jump_statement	::= GOTO IDENTIFIER SEMICOLON
 														RESULT=ep;	:};
 
 
-logical_and_expression	::= inclusive_or_expression
+logical_and_expression	::= inclusive_or_expression:ie {: RESULT = ie; :}
 						| logical_and_expression:le AND_OP inclusive_or_expression;
 
 
