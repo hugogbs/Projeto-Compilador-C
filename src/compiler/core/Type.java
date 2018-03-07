@@ -1,7 +1,7 @@
 package compiler.core;
 
 
-public class Type{
+public class Type implements Parameter {
 
 	private String typeName;
 
@@ -24,4 +24,13 @@ public class Type{
 		return getName();
 	}
 
+	@Override
+	public Type getType() {
+		return this;
+	}
+
+	@Override
+	public String getIdentifier() {
+		return getName();
+	}
 }

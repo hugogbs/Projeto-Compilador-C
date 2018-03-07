@@ -7,23 +7,35 @@ public class Expression {
 	private String value;
 	private String context;
 	private Register register;
+	private boolean returnFlag;
 	
 	public Expression(Type t) {
 		this.type = t;
+		this.returnFlag = false;
 	}
 	
 	public Expression(String name) {
 		type = new Type("UNKNOWN");
+		this.returnFlag = false;
 	}
 	
 	public Expression(Type t, String value) {
 		this.type = t;
 		this.value = value;
 		this.context = "";
+		this.returnFlag = false;
 	}
 	
 	public Type getType() {
 		return type;
+	}
+
+	public void setReturn(boolean returnFlag) {
+		this.returnFlag = returnFlag;
+	}
+
+	public boolean isReturn() {
+		return returnFlag;
 	}
 	
 	public String getValue() {

@@ -354,7 +354,7 @@ public class SemanticImpl {
 
 		if (params != null) {
 			for (Parameter p : params) {
-				variables.put(p.getIdentifier(), (Variable) p);
+				variables.put(p.getIdentifier(), new Variable(p.getIdentifier(), p.getType()));
 			}
 			checkExistingParameter(params);
 		}
