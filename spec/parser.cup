@@ -75,7 +75,7 @@ primary_expression ::= IDENTIFIER:id {: Variable var = SemanticImpl.getInstance(
                    RESULT = exp;
                 :}
   | string
-  | LPAREN expression:e RPAREN {: Expression exp = (Expression) e; RESULT = exp; :}
+  | LPAREN expression:ep RPAREN {: Expression exp = (Expression) ep; RESULT = exp; :}
   | generic_selection
   ;
 
@@ -103,7 +103,7 @@ generic_association
 	::= type_name DDOT assignment_expression
 	| DEFAULT DDOT assignment_expression
 	;
-
+// a++ a--
 postfix_expression
 	::= primary_expression
 	| postfix_expression LBRA expression RBRA
@@ -118,9 +118,11 @@ postfix_expression
 	;
 
 argument_expression_list
-	::= assignment_expression:ep {: ArrayList<Expression> el = new ArrayList<Expression>(); el.add((Expression) ep); RESULT = el;:}
-	| argument_expression_list:epl COMMA assignment_expression:ep {: ((ArrayList) epl).add((Expression) ep); RESULT = epl;:}
+	::= assignment_expression:aep {: ArrayList<Expression> el = new ArrayList<Expression>(); el.add((Expression) aep); RESULT = el;:}
+	| argument_expression_list:epl COMMA assignment_expression:aep {: ((ArrayList) epl).add((Expression) aep); RESULT = epl;:}
 	;
+
+// ++a e --a
 
 unary_expression
 	::= postfix_expression
@@ -142,32 +144,32 @@ unary_operator
 	;
 
 cast_expression
-	::= unary_expression:ep {: if (ep instanceof String) {
-	                              Variable v = SemanticImpl.getInstance().getVariableById((String) ep);
+	::= unary_expression:uep {: if (uep instanceof String) {
+	                              Variable v = SemanticImpl.getInstance().getVariableById((String) uep);
                                   if (v.getValue() != null) { RESULT = v.getValue(); }
-                                  else { RESULT = new Expression((Type) v.getType(), (String) ep); }
-                         	  }else { RESULT = ep;}	:}
+                                  else { RESULT = new Expression((Type) v.getType(), (String) uep); }
+                         	  }else { RESULT = uep;} :}
 
-	| LPAREN type_name:t1 RPAREN cast_expression:t2
+	| LPAREN type_name:tn RPAREN cast_expression:cep
 	;
 
 multiplicative_expression
-	::= cast_expression:exp  {: RESULT = (Expression) exp; :}
-	| multiplicative_expression:e1 STAR:st cast_expression:e2 {: Logger.print("+");
-	SemanticImpl.getInstance().checkTypeCompatibility(((Expression) e1).getType(), ((Expression) e2).getType()); Logger.print("++");
-	                                                             SemanticImpl.getInstance().generateBaseOpCode(st.toString(), (Expression) e1, (Expression) e2);
-	                                                             Logger.print("+++");:}
-	| multiplicative_expression:e1 BAR:br cast_expression:e2 {: Logger.print("Line 143");
-     	                                                        SemanticImpl.getInstance().generateBaseOpCode((String) br, (Expression) e1, (Expression) e2);:}
-	| multiplicative_expression:e1 PERC:pr cast_expression:e2 {: Logger.print("Line 144");
-     	                                                        SemanticImpl.getInstance().generateBaseOpCode((String) pr, (Expression) e1, (Expression) e2);:}
+	::= cast_expression:cep  {: RESULT = (Expression) cep; :}
+	| multiplicative_expression:mep STAR:st cast_expression:cep {:
+	SemanticImpl.getInstance().checkTypeCompatibility(((Expression) mep).getType(), ((Expression) cep).getType());
+	                                                             SemanticImpl.getInstance().generateBaseOpCode(st.toString(), (Expression) mep, (Expression) cep);
+	                                                             :}
+	| multiplicative_expression:mep BAR:br cast_expression:cep {: Logger.print("Line 143");
+     	                                                        SemanticImpl.getInstance().generateBaseOpCode((String) br, (Expression) mep, (Expression) cep);:}
+	| multiplicative_expression:mep PERC:pr cast_expression:cep {: Logger.print("Line 144");
+     	                                                        SemanticImpl.getInstance().generateBaseOpCode((String) pr, (Expression) mep, (Expression) cep);:}
 	;
 
 additive_expression
 	::= multiplicative_expression
-	| additive_expression:e1 PLUS multiplicative_expression:e2
-	| additive_expression:e1 MINUS:mn multiplicative_expression:e2 {:
-                                                                      SemanticImpl.getInstance().generateBaseOpCode((String) mn, (Expression) e1, (Expression) e2);:}
+	| additive_expression:aep PLUS multiplicative_expression:mep
+	| additive_expression:aep MINUS:mn multiplicative_expression:mep {:
+                                                                      SemanticImpl.getInstance().generateBaseOpCode((String) mn, (Expression) aep, (Expression) aep);:}
 	;
 
 shift_expression
@@ -177,17 +179,23 @@ shift_expression
 	;
 
 relational_expression
-	::= shift_expression {: Logger.print("Line 160"); :}
-	| relational_expression LT shift_expression {: Logger.print("Line 161"); :}
-	| relational_expression GT shift_expression {: Logger.print("Line 162"); :}
-	| relational_expression LE_OP shift_expression {: Logger.print("Line 163"); :}
-	| relational_expression GE_OP shift_expression {: Logger.print("Line 164"); :}
+	::= shift_expression:se {: RESULT = se; Logger.print("Line 160"); :}
+	| relational_expression:rep LT:lt shift_expression:sep {:  SemanticImpl.getInstance().generateBaseOpCode(lt.toString(), (Expression) rep, (Expression) sep);
+	                                                             Logger.print("Line 161"); :}
+	| relational_expression:rep GT:gt shift_expression:sep {: SemanticImpl.getInstance().generateBaseOpCode(gt.toString(), (Expression) rep, (Expression) sep);
+	                                                            Logger.print("Line 162"); :}
+	| relational_expression:rep LE_OP:le_op shift_expression:sep {: SemanticImpl.getInstance().generateBaseOpCode(le_op.toString(), (Expression) rep, (Expression) sep);
+	                                                        Logger.print("Line 163"); :}
+	| relational_expression:rep GE_OP:ge_op shift_expression:sep {: SemanticImpl.getInstance().generateBaseOpCode(ge_op.toString(), (Expression) rep, (Expression) sep);
+	                                                               Logger.print("Line 164"); :}
 	;
 
 equality_expression
 	::= relational_expression  {: Logger.print("Line 164"); :}
-	| equality_expression EQ_OP relational_expression {: Logger.print("Line 169"); :}
-	| equality_expression NE_OP relational_expression {: Logger.print("Line 170"); :}
+	| equality_expression:eep EQ_OP:eq_op relational_expression:rep {: SemanticImpl.getInstance().generateBaseOpCode(eq_op.toString(), (Expression) eep, (Expression) rep);
+	                                                                  Logger.print("Line 169"); :}
+	| equality_expression:eep NE_OP:ne_op relational_expression:rep {: SemanticImpl.getInstance().generateBaseOpCode(ne_op.toString(), (Expression) eep, (Expression) rep);
+	                                                                  Logger.print("Line 170"); :}
 	;
 
 and_expression
@@ -222,9 +230,10 @@ conditional_expression
 
 assignment_expression
 	::= conditional_expression
-	| unary_expression:e1 assignment_operator:op assignment_expression:e2 {: SemanticImpl.getInstance().checkTypeCompatibility(
-	                                                                             ((Expression) e1).getType(),
-	                                                                             ((Expression) e2).getType()); :}
+	| unary_expression:uep assignment_operator:op assignment_expression:aep {: Logger.print(((Expression) uep).toString()); Logger.print(((Expression) aep).toString());
+	                                                                         SemanticImpl.getInstance().checkTypeCompatibility(
+	                                                                             ((Expression) uep).getType(),
+	                                                                             ((Expression) aep).getType()); :}
 	;
 
 assignment_operator
@@ -242,8 +251,8 @@ assignment_operator
 	;
 
 expression
-	::= assignment_expression:e {: Logger.print("Line 223"); RESULT =  ListCreator.newList(e); :}
-	| expression:e COMMA assignment_expression:el {: Logger.print("Line 224"); ((ArrayList<Expression>) el).add((Expression)e); RESULT = e; :}
+	::= assignment_expression:aep {: Logger.print("Line 223"); :} //RESULT =  ListCreator.newList(aep);
+	| expression:ep COMMA assignment_expression:aep {: Logger.print("Line 224"); :} //((ArrayList<Expression>) aep).add((Expression)ep); RESULT = ep;
 	;
 
 constant_expression
@@ -371,6 +380,8 @@ enumerator	/* identifiers must be flagged as ENUMERATION_CONSTANT */
 	| enumeration_constant
 	;
 
+
+
 /*atomic_type_specifier
 	::= ATOMIC LPAREN type_name RPAREN
 	;*/
@@ -398,20 +409,33 @@ declarator
 	;
 
 direct_declarator
-	::= IDENTIFIER
-	| LPAREN declarator RPAREN
-	| direct_declarator LBRA RBRA
-	| direct_declarator LBRA STAR RBRA
-	| direct_declarator LBRA STATIC type_qualifier_list assignment_expression RBRA
-	| direct_declarator LBRA STATIC assignment_expression RBRA
-	| direct_declarator LBRA type_qualifier_list STAR RBRA
-	| direct_declarator LBRA type_qualifier_list STATIC assignment_expression RBRA
-	| direct_declarator LBRA type_qualifier_list assignment_expression RBRA
-	| direct_declarator LBRA type_qualifier_list RBRA
-	| direct_declarator LBRA assignment_expression RBRA
-	| direct_declarator LPAREN parameter_type_list RPAREN
-	| direct_declarator LPAREN RPAREN
-	| direct_declarator LPAREN identifier_list RPAREN
+	::= IDENTIFIER:id {: Variable var = SemanticImpl.getInstance().getVariableById(id.toString());
+                   	     if (var != null) {
+                   	        SemanticImpl.getInstance().addVariableToTempList(var);
+                   	     }
+                   	      Expression exp = new Expression(null, null);
+                          Variable v2 = new Variable(id.toString(), null, exp);
+                          SemanticImpl.getInstance().addVariable(v2);
+                          RESULT = v2;
+                           :}
+	| LPAREN declarator:d RPAREN {: RESULT = d;:}
+	| direct_declarator:dd LBRA RBRA {: RESULT = dd; :}
+	| direct_declarator:dd LBRA STAR RBRA {: RESULT = dd; :}
+	| direct_declarator:dd LBRA STATIC type_qualifier_list assignment_expression RBRA {:RESULT = dd;:}
+	| direct_declarator:dd LBRA STATIC assignment_expression RBRA {:RESULT = dd;:}
+	| direct_declarator:dd LBRA type_qualifier_list STAR RBRA {:RESULT = dd;:}
+	| direct_declarator:dd LBRA type_qualifier_list STATIC assignment_expression RBRA {:RESULT = dd;:}
+	| direct_declarator:dd LBRA type_qualifier_list assignment_expression RBRA {:RESULT = dd;:}
+	| direct_declarator:dd LBRA type_qualifier_list RBRA
+	| direct_declarator:dd LBRA assignment_expression RBRA
+	| direct_declarator:dd LPAREN parameter_type_list:ptl RPAREN {: String id = ((Variable) dd).getIdentifier();
+                                                             	ArrayList<Parameter> params = (ArrayList<Parameter>) ptl;
+                                                             	Function f = new Function(id, params);
+                                                             	SemanticImpl.getInstance().addFunctionAndNewScope(f);
+                                                             	RESULT = dd;
+                                                            :}
+	| direct_declarator:dd LPAREN RPAREN {: RESULT = dd; :}
+	| direct_declarator:dd LPAREN identifier_list RPAREN
 	;
 
 pointer

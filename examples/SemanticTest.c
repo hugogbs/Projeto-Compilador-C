@@ -15,6 +15,7 @@
 
 int main(void)
 {
+  int dois = 2;
   int teste;
   int contador; //variável de controle do loop
   int a;
