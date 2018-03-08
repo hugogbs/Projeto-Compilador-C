@@ -390,7 +390,6 @@ public class SemanticImpl {
 			throws InvalidParameterException {
 		for (int i = 0; i < params.size(); i++) {
 			if (!params.get(i).getIdentifier().equals("")){
-				System.out.println("IDENTIFIER DESSE CARALHO "+params.get(i).getIdentifier());
 				for (int k = i + 1; k < params.size(); k++) {
 					if (params.get(i).getIdentifier()
 							.equals(params.get(k).getIdentifier())) {
