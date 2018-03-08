@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="module_projeto-compilador-c" default="compile.module.projeto-compilador-c">
+  <dirname property="module.projeto-compilador-c.basedir" file="${ant.file.module_projeto-compilador-c}"/>
+  
+  <property name="module.jdk.home.projeto-compilador-c" value="${project.jdk.home}"/>
+  <property name="module.jdk.bin.projeto-compilador-c" value="${project.jdk.bin}"/>
+  <property name="module.jdk.classpath.projeto-compilador-c" value="${project.jdk.classpath}"/>
+  
+  <property name="compiler.args.projeto-compilador-c" value="-encoding UTF-8 -source 8 -target 8 ${compiler.args}"/>
+  
+  <property name="projeto-compilador-c.output.dir" value="${module.projeto-compilador-c.basedir}/out/production/Projeto-Compilador-C"/>
+  <property name="projeto-compilador-c.testoutput.dir" value="${module.projeto-compilador-c.basedir}/out/test/Projeto-Compilador-C"/>
+  
+  <path id="projeto-compilador-c.module.bootclasspath">
+    <!-- Paths to be included in compilation bootclasspath -->
+  </path>
+  
+  <path id="projeto-compilador-c.module.production.classpath">
+    <path refid="${module.jdk.classpath.projeto-compilador-c}"/>
+    <path refid="library.libs.classpath"/>
+  </path>
+  
+  <path id="projeto-compilador-c.runtime.production.module.classpath">
+    <pathelement location="${projeto-compilador-c.output.dir}"/>
+    <path refid="library.libs.classpath"/>
+  </path>
+  
+  <path id="projeto-compilador-c.module.classpath">
+    <path refid="${module.jdk.classpath.projeto-compilador-c}"/>
+    <pathelement location="${projeto-compilador-c.output.dir}"/>
+    <path refid="library.libs.classpath"/>
+  </path>
+  
+  <path id="projeto-compilador-c.runtime.module.classpath">
+    <pathelement location="${projeto-compilador-c.testoutput.dir}"/>
+    <pathelement location="${projeto-compilador-c.output.dir}"/>
+    <path refid="library.libs.classpath"/>
+  </path>
+  
+  
+  <patternset id="excluded.from.module.projeto-compilador-c">
+    <patternset refid="ignored.files"/>
+  </patternset>
+  
+  <patternset id="excluded.from.compilation.projeto-compilador-c">
+    <patternset refid="excluded.from.module.projeto-compilador-c"/>
+  </patternset>
+  
+  <path id="projeto-compilador-c.module.sourcepath">
+    <dirset dir="${module.projeto-compilador-c.basedir}">
+      <include name="examples"/>
+      <include name="src"/>
+    </dirset>
+  </path>
+  
+  
+  <target name="compile.module.projeto-compilador-c" depends="compile.module.projeto-compilador-c.production,compile.module.projeto-compilador-c.tests" description="Compile module Projeto-Compilador-C"/>
+  
+  <target name="compile.module.projeto-compilador-c.production" depends="register.custom.compilers" description="Compile module Projeto-Compilador-C; production classes">
+    <mkdir dir="${projeto-compilador-c.output.dir}"/>
+    <javac2 destdir="${projeto-compilador-c.output.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" memorymaximumsize="${compiler.max.memory}" fork="true" executable="${module.jdk.bin.projeto-compilador-c}/javac">
+      <compilerarg line="${compiler.args.projeto-compilador-c}"/>
+      <bootclasspath refid="projeto-compilador-c.module.bootclasspath"/>
+      <classpath refid="projeto-compilador-c.module.production.classpath"/>
+      <src refid="projeto-compilador-c.module.sourcepath"/>
+      <patternset refid="excluded.from.compilation.projeto-compilador-c"/>
+    </javac2>
+    
+    <copy todir="${projeto-compilador-c.output.dir}">
+      <fileset dir="${module.projeto-compilador-c.basedir}/examples">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+      </fileset>
+      <fileset dir="${module.projeto-compilador-c.basedir}/src">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+      </fileset>
+    </copy>
+  </target>
+  
+  <target name="compile.module.projeto-compilador-c.tests" depends="register.custom.compilers,compile.module.projeto-compilador-c.production" description="compile module Projeto-Compilador-C; test classes" unless="skip.tests"/>
+  
+  <target name="clean.module.projeto-compilador-c" description="cleanup module">
+    <delete dir="${projeto-compilador-c.output.dir}"/>
+    <delete dir="${projeto-compilador-c.testoutput.dir}"/>
+  </target>
+</project>
