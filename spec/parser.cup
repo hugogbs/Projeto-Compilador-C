@@ -202,6 +202,12 @@ init_declarator	::= declarator:id EQUALS initializer:ep	{:	Variable v = new Vari
 															SemanticImpl.getInstance().addVariableToTempList(v);
 															RESULT = v;	:};
 
+/*if(e instanceof String){ SemanticImpl.getInstance().checkVariableAttribution(id, (String) e);
+  												Variable var = SemanticImpl.getInstance().findVariableByIdentifier((String) id);
+  												SemanticImpl.getInstance().getCodeGenerator().assignmentDeclaration((Variable)var,(Expression)e);
+  												}else{ SemanticImpl.getInstance().checkVariableAttribution(id, (Expression) e); Variable var = SemanticImpl.getInstance().findVariableByIdentifier((String) id);
+  												((Expression) e).setAssemblyValue((String) id); var.setValue((Expression) e); var.getValue().setRegister(var.getRegister());
+  												SemanticImpl.getInstance().generateBaseOpCode((String) op, ((Variable)var).getValue(),(Expression)e); RESULT = e;}:} */
 
 constant_expression	::= conditional_expression;
 
@@ -272,7 +278,7 @@ statement	::= labeled_statement
 			| compound_statement
 			| expression_statement
 			| selection_statement
-			| iteration_statement
+			| iteration_statement:st {:RESULT=st;:}
 			| jump_statement:st		{:	RESULT = st;	:};
 
 
@@ -291,7 +297,8 @@ expression	::= assignment_expression:ep {: RESULT = ep; :}
 			| expression COMMA assignment_expression;
 
 
-postfix_expression	::= primary_expression:ep	{:	RESULT = ep;	:}
+postfix_expression	::= primary_expression:ep	{:  RESULT  = ep;
+                                                    	:}
 					| postfix_expression LBRA expression RBRA
 					| postfix_expression:id LPAREN RPAREN	{: SemanticImpl.getInstance().verifyCall((String)id,(ArrayList<Expression>) new ArrayList());
 																							RESULT = id;	:}
@@ -316,6 +323,8 @@ unary_operator	::= AND
 
 cast_expression	::= unary_expression:ep 						{:	if (ep instanceof String) {
 																		Variable v = SemanticImpl.getInstance().findVariableByIdentifier((String) ep);
+																		if (v.getRegister() == null)
+                                                                        	v.setRegister(SemanticImpl.getInstance().getCodeGenerator().allocateRegister());
 																		if (v.getValue() != null) {
 																			RESULT = v.getValue();
 																		} else {
@@ -364,9 +373,7 @@ logical_and_expression	::= inclusive_or_expression:ep {: Logger.print("logical_a
 						| logical_and_expression:le AND_OP inclusive_or_expression;
 
 
-primary_expression	::= IDENTIFIER:id	{:
-
-                            Logger.print("primary_expression ::= IDENTIFIER");
+primary_expression	::= IDENTIFIER:id	{:Logger.print("primary_expression ::= IDENTIFIER");
 														RESULT = id; :}
 					| constant:c					{:	Logger.print("primary_expression ::= constant");
 														RESULT = c;	:}
@@ -415,16 +422,65 @@ and_expression	::= equality_expression:ep	    {:	Logger.print("and_expression ::
 
 equality_expression	::= relational_expression:ep	{:	Logger.print("equality_expression ::= relational_expression");
 														RESULT = ep;	:}
-					| equality_expression EQ_OP relational_expression
-					| equality_expression NE_OP relational_expression;
+					| equality_expression:le EQ_OP relational_expression:re {: if (((Expression) le).getRegister() == null) {
+                                                                            						                                                            SemanticImpl.getInstance().getCodeGenerator().generateLDCode((Expression) le);
+                                                                            						                                                     }
+                                                                            						                                                     if (((Expression) re).getRegister() == null) {
+                                                                                                                                                         		SemanticImpl.getInstance().getCodeGenerator().generateLDCode((Expression) re);
+                                                                                                                                                         }
+                                                                            						                                                     SemanticImpl.getInstance().getCodeGenerator().generateSUBCode(((Expression) le).getRegister(), ((Expression) re).getRegister());
+                                                                            						                                                     RESULT = SemanticImpl.getInstance().getRelationalExpression((Expression) le, "==", (Expression) re);:}
+					| equality_expression:le NE_OP relational_expression:re {: if (((Expression) le).getRegister() == null) {
+                                                                            						                                                            SemanticImpl.getInstance().getCodeGenerator().generateLDCode((Expression) le);
+                                                                            						                                                     }
+                                                                            						                                                     if (((Expression) re).getRegister() == null) {
+                                                                                                                                                         		SemanticImpl.getInstance().getCodeGenerator().generateLDCode((Expression) re);
+                                                                                                                                                         }
+                                                                            						                                                     SemanticImpl.getInstance().getCodeGenerator().generateSUBCode(((Expression) le).getRegister(), ((Expression) re).getRegister());
+                                                                            						                                                     RESULT = SemanticImpl.getInstance().getRelationalExpression((Expression) le, "!=", (Expression) re);:}
+					;
 
 // checkTestingExpression
 relational_expression	::= shift_expression:ep		{:	Logger.print("relational_expression ::= shift_expression");
 														RESULT = ep;	:}
-						| relational_expression:le LT shift_expression:re {:RESULT = SemanticImpl.getInstance().getRelationalExpression((Expression) le, "<", (Expression) re);:}
-						| relational_expression:le GT shift_expression:re {:RESULT = SemanticImpl.getInstance().getRelationalExpression((Expression) le, ">", (Expression) re);:}
-						| relational_expression:le LE_OP shift_expression:re {:RESULT = SemanticImpl.getInstance().getRelationalExpression((Expression) le, "<=", (Expression) re);:}
-						| relational_expression:le GE_OP shift_expression:re {:RESULT = SemanticImpl.getInstance().getRelationalExpression((Expression) le, ">=", (Expression) re);:}
+						| relational_expression:le LT shift_expression:re {: if (((Expression) le).getRegister() == null) {
+						                                                            ((Expression) le).setRegister( SemanticImpl.getInstance().getCodeGenerator().generateLDCode((Expression) le) );
+
+						                                                     }
+						                                                     if (((Expression) re).getRegister() == null) {
+                                                                             		((Expression) re).setRegister( SemanticImpl.getInstance().getCodeGenerator().generateLDCode((Expression) re) );
+                                                                             }
+						                                                     SemanticImpl.getInstance().getCodeGenerator().generateSUBCode(((Expression) le).getRegister(), ((Expression) re).getRegister());
+
+
+						                                                     Expression e = SemanticImpl.getInstance().getRelationalExpression((Expression) le, "<", (Expression) re);
+						                                                     e.setRegister( SemanticImpl.getInstance().getCodeGenerator().allocateRegister() );
+
+						                                                     RESULT = e; :}
+						| relational_expression:le GT shift_expression:re {:    if (((Expression) le).getRegister() == null) {
+						                                                            SemanticImpl.getInstance().getCodeGenerator().generateLDCode((Expression) le);
+						                                                        }
+						                                                        if (((Expression) re).getRegister() == null) {
+						                                                        		SemanticImpl.getInstance().getCodeGenerator().generateLDCode((Expression) re);
+						                                                        }
+						                                                        SemanticImpl.getInstance().getCodeGenerator().generateSUBCode(((Expression) le).getRegister(), ((Expression) re).getRegister());
+						                                                        RESULT = SemanticImpl.getInstance().getRelationalExpression((Expression) le, ">", (Expression) re);:}
+						| relational_expression:le LE_OP shift_expression:re {:     if (((Expression) le).getRegister() == null) {
+                                                                                            SemanticImpl.getInstance().getCodeGenerator().generateLDCode((Expression) le);
+                                                                                	}
+                                                                                	if (((Expression) re).getRegister() == null) {
+                                                                                			SemanticImpl.getInstance().getCodeGenerator().generateLDCode((Expression) re);
+                                                                                	}
+                                                                                	SemanticImpl.getInstance().getCodeGenerator().generateSUBCode(((Expression) le).getRegister(), ((Expression) re).getRegister());
+						                                                            RESULT = SemanticImpl.getInstance().getRelationalExpression((Expression) le, "<=", (Expression) re);:}
+						| relational_expression:le GE_OP shift_expression:re {:      if (((Expression) le).getRegister() == null) {
+                                                                                            SemanticImpl.getInstance().getCodeGenerator().generateLDCode((Expression) le);
+                                                                                     }
+                                                                                     if (((Expression) re).getRegister() == null) {
+                                                                                            SemanticImpl.getInstance().getCodeGenerator().generateLDCode((Expression) re);
+                                                                                     }
+                                                                                     SemanticImpl.getInstance().getCodeGenerator().generateSUBCode(((Expression) le).getRegister(), ((Expression) re).getRegister());
+						                                                             RESULT = SemanticImpl.getInstance().getRelationalExpression((Expression) le, ">=", (Expression) re);:}
 						;
 
 
@@ -514,7 +570,7 @@ type_name	::= specifier_qualifier_list abstract_declarator
 			| specifier_qualifier_list;
 
 
-identifier_list	::= IDENTIFIER
+identifier_list	::= IDENTIFIER:id {:RESULT=id;:}
 				| identifier_list COMMA IDENTIFIER;
 
 

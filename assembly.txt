@@ -1,3 +1,8 @@
 100: LD SP, #6000
 108: LD R2, 2
-116: ST dois, R2
+116: ST t1, R2
+124: LD R2, 3
+132: ST t2, R2
+140: SUB R2, R1, R1
+148: LD R3, 1
+156: ST lt, R3

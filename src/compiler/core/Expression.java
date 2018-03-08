@@ -39,7 +39,7 @@ public class Expression {
 	}
 	
 	public void setRegister(Register register) {
-		this. register = register;
+		this.register = register;
 	}
 	
 	public Register getRegister() {

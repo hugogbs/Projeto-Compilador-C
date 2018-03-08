@@ -449,6 +449,12 @@ public class SemanticImpl {
 				case "<=":
 					result = calculator.getLessThanEqualBooleanValue(le, re, md);
 					return new Expression(newType, bool2Num(result));
+				case "==":
+					result = calculator.getEqualBooleanValue(le, re, md);
+					return new Expression(newType, bool2Num(result));
+				case "!=":
+					result = calculator.getNotEqualBooleanValue(le, re, md);
+					return new Expression(newType, bool2Num(result));
 				default:
 					break;
 			}
@@ -681,4 +687,5 @@ public class SemanticImpl {
 			return Operation.PLUS;
 		}
 	}
+
 }
