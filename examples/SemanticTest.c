@@ -24,7 +24,6 @@ int main(void)
   int d;
   for(contador = 1; contador <= 10; contador++)
   {
-      c = a - b;
       d = c + a;
   }
   getch();

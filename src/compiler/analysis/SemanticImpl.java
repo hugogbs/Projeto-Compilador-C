@@ -429,6 +429,39 @@ public class SemanticImpl {
 		throw new InvalidTypeException("Not allowed!");
 	}
 
+
+	public Expression getRelationalExpression(Expression le, String md, Expression re)
+			throws InvalidTypeException, InvalidOperationException {
+		if (checkTypeCompatibility(le.getType(), re.getType())
+				|| checkTypeCompatibility(re.getType(), le.getType())) {
+			Type newType = getMajorType(le.getType(), re.getType());
+			Boolean result;
+			switch (md) {
+				case ">":
+					result = calculator.getGreaterThanBooleanValue(le, re, md);
+					return new Expression(newType, bool2Num(result));
+				case "<":
+					result = calculator.getLessThanBooleanValue(le, re, md);
+					return new Expression(newType, bool2Num(result));
+				case ">=":
+					result = calculator.getGreaterThanOrEqualBooleanValue(le, re, md);
+					return new Expression(newType, bool2Num(result));
+				case "<=":
+					result = calculator.getLessThanEqualBooleanValue(le, re, md);
+					return new Expression(newType, bool2Num(result));
+				default:
+					break;
+			}
+			return new Expression(newType);
+		}
+		throw new InvalidTypeException("Not allowed!");
+	}
+
+	private String bool2Num(boolean value){
+		if (value) return "1";
+		return "0";
+	}
+
 	private Type getMajorType(Type type1, Type type2) {
 		return tiposCompativeis.get(type1.getName()).contains(type2.getName()) ? type1
 				: type2;
