@@ -4,6 +4,7 @@ package compiler.core;
 public class Type implements Parameter {
 
 	private String typeName;
+	private String identifier = "";
 
 	public Type(String typeName) {
 		this.typeName = typeName;

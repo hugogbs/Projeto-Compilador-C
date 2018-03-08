@@ -354,6 +354,7 @@ public class SemanticImpl {
 
 		if (params != null) {
 			for (Parameter p : params) {
+				Variable variable = new Variable(p.getIdentifier(), p.getType());
 				variables.put(p.getIdentifier(), new Variable(p.getIdentifier(), p.getType()));
 			}
 			checkExistingParameter(params);
@@ -363,7 +364,6 @@ public class SemanticImpl {
 	}
 
 	private boolean hasReturn(Expression exp) throws InvalidFunctionException {
-		System.out.println("EXPRESSION " +exp.getContext());
 		if(exp.getContext() == null) return false;
 		return exp.getContext().equalsIgnoreCase("return");
 	}
@@ -390,6 +390,7 @@ public class SemanticImpl {
 			throws InvalidParameterException {
 		for (int i = 0; i < params.size(); i++) {
 			if (!params.get(i).getIdentifier().equals("")){
+				System.out.println("IDENTIFIER DESSE CARALHO "+params.get(i).getIdentifier());
 				for (int k = i + 1; k < params.size(); k++) {
 					if (params.get(i).getIdentifier()
 							.equals(params.get(k).getIdentifier())) {

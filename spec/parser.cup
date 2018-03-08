@@ -11,13 +11,13 @@ parser code  {:
  public void report_error(String message, Object info){
    StringBuffer m = new StringBuffer("Error ");
 
-   if (info instanceof compiler.core.JavaSymbol) {
-      compiler.core.JavaSymbol s = ((compiler.core.JavaSymbol) info);
+   if (info instanceof java_cup.runtime.Symbol) {
+      java_cup.runtime.Symbol s = ((java_cup.runtime.Symbol) info);
 
-      if (s.getLine() >= 0) {
-          m.append(" in line "+(s.getLine()));
-          if (s.getColumn() >= 0)
-              m.append(", column "+(s.getColumn()));
+      if (s.left >= 0) {
+          m.append(" in line "+(s.left + 1));
+          if (s.right >= 0)
+              m.append(", column "+(s.right + 1));
       }
    }
 
@@ -28,7 +28,8 @@ parser code  {:
 
  public void report_fatal_error(String message, Object info) {
    report_error(message, info);
-   throw new RuntimeException("Fatal Syntax Error");
+   System.exit(1);
+   /*throw new RuntimeException("Fatal Syntax Error");*/
  }
 :};
 
@@ -115,7 +116,7 @@ declaration_specifiers	::= storage_class_specifier declaration_specifiers:t	{:	R
 						| type_specifier:t declaration_specifiers				{:	RESULT = t;
 																					Logger.print("declaration_specifiers ::=	type_specifier declaration_specifiers");	:}
 						| type_specifier:t										{:	RESULT = t;
-																					Logger.print("declaration_specifiers ::=	type_specifier");	:}
+																					Logger.print("declaration_specifiers ::=	type_specifier "+t);	:}
 						| type_qualifier declaration_specifiers:t				{:	RESULT = t;
 																					Logger.print("declaration_specifiers ::=	type_qualifier declaration_specifiers");	:}
 						| type_qualifier										{:	Logger.print("declaration_specifiers ::=	type_qualifier");	:}
@@ -184,11 +185,12 @@ block_item_list	::= block_item:st				{:	RESULT = st;	:}
 				| block_item_list block_item:st	{:	RESULT = st;	:};
 
 
-init_declarator	::= declarator:id EQUALS initializer:ep	{:	Variable v = new Variable((String) id, new Type("null"), (Expression) ep);
+init_declarator	::= declarator:id EQUALS initializer:ep	{:	Logger.print("init_declarator	::= declarator EQUALS initializer "+ep+" "+id); Variable v = new Variable((String) id, new Type("null"), (Expression) ep);
 															SemanticImpl.getInstance().addVariableToTempList(v);
 															/*codeEngine.generateAttribution((String) id, ep);*/
 															RESULT = v;	:}
-				| declarator:id							{:	Variable v = new Variable((String) id, new Type("null"));
+				| declarator:id							{:	Logger.print("init_declarator	::= declarator "+id);
+				                                            Variable v = new Variable((String) id, new Type("null"));
 															SemanticImpl.getInstance().addVariableToTempList(v);
 															RESULT = v;	:};
 
@@ -212,7 +214,7 @@ assignment_expression	::= conditional_expression:ep   {:	Logger.print("assignmen
 
 
 parameter_type_list	::= parameter_list COMMA ELLIPSIS
-					| parameter_list:pl					{:	RESULT = pl;	Logger.print("parameter_type_list	::= parameter_list"); :};
+					| parameter_list:pl					{:	RESULT = pl;	Logger.print("parameter_type_list	::= parameter_list "+pl); :};
 
 
 block_item	::= declaration
@@ -424,7 +426,7 @@ shift_expression	::= additive_expression:ep							{:	Logger.print("shift_express
 
 additive_expression	::= multiplicative_expression:ep							{:	Logger.print("additive_expression ::= multiplicative_expression");
 																					RESULT = ep;	:}
-					| additive_expression:le PLUS multiplicative_expression:re	{:	Logger.print("additive_expression ::= additive_expression PLUS multiplicative_expression");
+					| additive_expression:le PLUS multiplicative_expression:re	{:	Logger.print("additive_expression ::= additive_expression PLUS multiplicative_expression "+le+" "+re);
 																					RESULT = SemanticImpl.getInstance().getExpression((Expression) le, "+", (Expression) re);
 																					/*codeEngine.operation((Expression) RESULT, (Expression) le, Operation.valueOf("PLUS"), (Expression) re);*/	:}
 					| additive_expression:le MINUS multiplicative_expression:re	{:	Logger.print("additive_expression ::= additive_expression MINUS multiplicative_expression");
