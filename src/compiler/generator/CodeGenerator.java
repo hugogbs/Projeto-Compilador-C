@@ -363,6 +363,7 @@ public class CodeGenerator {
 		this.register = this.lastRegisterUsed;
 	}
 
+
 	///////////////////////////////////////////////////////////////////////////////////
 
 	public void addCode(String assemblyString) {

@@ -104,8 +104,10 @@ parameter_type_list_opt ::=							{:	Logger.print("parameter_type_list_opt ::=	<
 
 declaration	::= declaration_specifiers:t SEMICOLON						{:	SemanticImpl.getInstance().addVariablesFromTempList((Type) t);
 																			Logger.print("declaration ::=	declaration_specifiers SEMICOLON");	:}
-			| declaration_specifiers:t init_declarator_list:v SEMICOLON	{:	SemanticImpl.getInstance().addVariablesFromTempList((Type) t);
-																			Logger.print("declaration ::=	declaration_specifiers init_declarator_list SEMICOLON");	:}
+			| declaration_specifiers:t init_declarator_list:v  {:
+			        SemanticImpl.getInstance().addVariablesFromTempList((Type) t);
+                    Logger.print("declaration ::=	declaration_specifiers init_declarator_list SEMICOLON");
+              :} SEMICOLON
 			| static_assert_declaration									{:	Logger.print("declaration ::=	static_assert_declaration");	:};
 
 
@@ -184,9 +186,10 @@ block_item_list	::= block_item:st				{:	RESULT = st;	:}
 				| block_item_list block_item:st	{:	RESULT = st;	:};
 
 
-init_declarator	::= declarator:id EQUALS initializer:ep	{:	Variable v = new Variable((String) id, new Type("null"), (Expression) ep);
+init_declarator	::= declarator:id EQUALS initializer:ep	{:	Variable v = new Variable((String) id, ((Expression) ep).getType(), (Expression) ep);
 															SemanticImpl.getInstance().addVariableToTempList(v);
-															/*codeEngine.generateAttribution((String) id, ep);*/
+															SemanticImpl.getInstance().getCodeGenerator().generateLDCode(((Expression) v.getValue()));
+															SemanticImpl.getInstance().getCodeGenerator().generateSTCode(v);
 															RESULT = v;	:}
 				| declarator:id							{:	Variable v = new Variable((String) id, new Type("null"));
 															SemanticImpl.getInstance().addVariableToTempList(v);
@@ -354,8 +357,10 @@ logical_and_expression	::= inclusive_or_expression:ep {: Logger.print("logical_a
 						| logical_and_expression:le AND_OP inclusive_or_expression;
 
 
-primary_expression	::= IDENTIFIER:id				{:	Logger.print("primary_expression ::= IDENTIFIER");
-														RESULT = id;	:}
+primary_expression	::= IDENTIFIER:id	{:
+
+                            Logger.print("primary_expression ::= IDENTIFIER");
+														RESULT = id; :}
 					| constant:c					{:	Logger.print("primary_expression ::= constant");
 														RESULT = c;	:}
 					| string:s						{:	Logger.print("primary_expression ::= string");
