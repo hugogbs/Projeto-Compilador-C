@@ -74,9 +74,9 @@ precedence nonassoc ATOMIC;
 start with translation_unit;
 
 
-translation_unit	::= external_declaration				{:	Logger.print("translation_unit ::= external_declaration");
+translation_unit	::= external_declaration: ed				{:	RESULT= ed; Logger.print("translation_unit ::= external_declaration");
                                                                 SemanticImpl.getInstance().getCodeGenerator().generateFinalAssemblyCode(); :}
-					| translation_unit external_declaration	{:	Logger.print("translation_unit ::= translation_unit external_declaration");
+					| translation_unit external_declaration:ed	{:	RESULT =ed; Logger.print("translation_unit ::= translation_unit external_declaration");
 						                                        SemanticImpl.getInstance().getCodeGenerator().generateFinalAssemblyCode(); :};
 
 
@@ -105,6 +105,8 @@ parameter_type_list_opt ::=							{:	Logger.print("parameter_type_list_opt ::=	<
 declaration	::= declaration_specifiers:t SEMICOLON						{:	SemanticImpl.getInstance().addVariablesFromTempList((Type) t);
 																			Logger.print("declaration ::=	declaration_specifiers SEMICOLON");	:}
 			| declaration_specifiers:t init_declarator_list:v  {:
+			        Variable var = (Variable) v;
+
 			        SemanticImpl.getInstance().addVariablesFromTempList((Type) t);
                     Logger.print("declaration ::=	declaration_specifiers init_declarator_list SEMICOLON");
               :} SEMICOLON
@@ -127,8 +129,11 @@ declaration_specifiers	::= storage_class_specifier declaration_specifiers:t	{:	R
 						| alignment_specifier									{:	Logger.print("declaration_specifiers ::=	alignment_specifier");	:};
 
 
+
+
 declarator	::= pointer direct_declarator	{:	Logger.print("declarator ::=	pointer direct_declarator");	:}
-			| direct_declarator:v 			{:	RESULT = v;
+			| direct_declarator:v 			{:
+			                                    RESULT = v;
 												Logger.print("declarator ::=	direct_declarator");	:};
 
 
@@ -166,7 +171,7 @@ type_specifier	::= VOID					{:	RESULT = new Type("void");	:}
 				| TYPEDEF_NAME;
 
 
-direct_declarator	::= IDENTIFIER:id																		{:	RESULT = id;	:}
+direct_declarator	::= IDENTIFIER:id	{:	RESULT = id;	:}
 					| LPAREN declarator RPAREN
 					| direct_declarator LBRA RBRA
 					| direct_declarator LBRA STAR RBRA
@@ -429,7 +434,8 @@ shift_expression	::= additive_expression:ep							{:	Logger.print("shift_express
 
 additive_expression	::= multiplicative_expression:ep							{:	Logger.print("additive_expression ::= multiplicative_expression");
 																					RESULT = ep;	:}
-					| additive_expression:le PLUS multiplicative_expression:re	{:	Logger.print("additive_expression ::= additive_expression PLUS multiplicative_expression");
+					| additive_expression:le PLUS multiplicative_expression:re	{:	SemanticImpl.getInstance().getCodeGenerator().generateFinalAssemblyCode();
+					Logger.print("additive_expression ::= additive_expression PLUS multiplicative_expression");
 																					RESULT = SemanticImpl.getInstance().getExpression((Expression) le, "+", (Expression) re);
 																					/*codeEngine.operation((Expression) RESULT, (Expression) le, Operation.valueOf("PLUS"), (Expression) re);*/	:}
 					| additive_expression:le MINUS multiplicative_expression:re	{:	Logger.print("additive_expression ::= additive_expression MINUS multiplicative_expression");
