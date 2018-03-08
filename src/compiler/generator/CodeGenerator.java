@@ -41,7 +41,7 @@ public class CodeGenerator {
 		return codeGen;
 	}
 	private String initAssemblyCode() {
-		return "100: LD SP, #8000\n";
+		return "100: LD SP, #6000\n";
 	}
 
 	public void assignmentDeclaration(Variable var, Object obj) {
