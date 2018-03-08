@@ -263,12 +263,14 @@ public class CodeGenerator {
 		addCode(labels + ": BNE " + one + ", " + two + ", #caseEnd");
 	}
 
-	public void generateBGEQZCode(int br) {
-		labels += 8;
-		int jump = (br * 8) + labels;
+	public void generateBGEQZCode(Register e,int br) {
+		if(Integer.parseInt(e.getValue()) >= 0){
+			labels += 8;
+			int jump = (br * 8) + labels;
 
-		Register current = allocateRegister();
-		addCode(labels + ": BGEQZ " + current + ", " + jump);
+			Register current = allocateRegister();
+			addCode(labels + ": BGEQZ " + current + ", " + jump);
+		}
 	}
 
 	public void generateBLEQZCode(int br) {
@@ -310,7 +312,7 @@ public class CodeGenerator {
 		addCode(labels + ": BR " + register);
 	}
 
-	/*LOAD CASE*/
+	/*LOAD CODE*/
 	public Register generateLDCode(Expression expression) {
 		Register r = null;
 		if (expression.getAssemblyValue() != null) {
@@ -361,6 +363,29 @@ public class CodeGenerator {
 		labels += 8;
 		addCode(labels + ": ST " + exp.getAssemblyValue() + ", " + allocateRegister());
 		this.register = this.lastRegisterUsed;
+	}
+
+	/* FOR CODE*/
+
+	public void generateFORCode(Expression e1, Expression e2,Expression e3, Expression e4){ // e1: a=1 e2: a<10 e3: a = a+1 e4: o q ta dentro do for
+		labels += 8;
+		Register r1 = registers[register - 1];
+		Register r2 = allocateRegister();
+
+		register++;
+		Register r3 = allocateRegister();
+		register++;
+		Register result = allocateRegister();
+
+		generateLDCode(r1,e1);
+		generateLDCode(r2,e2);
+		generateLDCode(r3,e3);
+		generateSUBCode(result,r1,r2);
+		generateBGEQZCode(result,8);
+		generateADDCode(r1,r1,r3);
+		generateBRCode(4);
+		generateHalt();
+
 	}
 
 	///////////////////////////////////////////////////////////////////////////////////
@@ -443,6 +468,7 @@ public class CodeGenerator {
 	}
 
 	public void generateFinalAssemblyCode() throws IOException {
+		System.out.println(getAssemblyCode());
 		BufferedWriter writer = new BufferedWriter(new FileWriter(new File("assembly.txt")));
 		writer.write(assemblyCode);
 		writer.close();
