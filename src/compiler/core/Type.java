@@ -31,6 +31,6 @@ public class Type implements Parameter {
 
 	@Override
 	public String getIdentifier() {
-		return getName();
+		return "";
 	}
 }

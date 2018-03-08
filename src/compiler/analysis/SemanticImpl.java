@@ -363,6 +363,7 @@ public class SemanticImpl {
 	}
 
 	private boolean hasReturn(Expression exp) throws InvalidFunctionException {
+		System.out.println("EXPRESSION " +exp.getContext());
 		if(exp.getContext() == null) return false;
 		return exp.getContext().equalsIgnoreCase("return");
 	}
@@ -388,12 +389,14 @@ public class SemanticImpl {
 	private void checkExistingParameter(ArrayList<Parameter> params)
 			throws InvalidParameterException {
 		for (int i = 0; i < params.size(); i++) {
-			for (int k = i + 1; k < params.size(); k++) {
-				if (params.get(i).getIdentifier()
-						.equals(params.get(k).getIdentifier())) {
-					throw new InvalidParameterException("The parameter: "
-							+ params.get(k).getIdentifier()
-							+ " has been previously defined.");
+			if (!params.get(i).getIdentifier().equals("")){
+				for (int k = i + 1; k < params.size(); k++) {
+					if (params.get(i).getIdentifier()
+							.equals(params.get(k).getIdentifier())) {
+						throw new InvalidParameterException("The parameter: "
+								+ params.get(k).getIdentifier()
+								+ " has been previously defined.");
+					}
 				}
 			}
 		}
