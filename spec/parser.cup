@@ -74,8 +74,10 @@ precedence nonassoc ATOMIC;
 start with translation_unit;
 
 
-translation_unit	::= external_declaration				{:	Logger.print("translation_unit ::= external_declaration");	:}
-					| translation_unit external_declaration	{:	Logger.print("translation_unit ::= translation_unit external_declaration");	:};
+translation_unit	::= external_declaration				{:	Logger.print("translation_unit ::= external_declaration");
+                                                                SemanticImpl.getInstance().getCodeGenerator().generateFinalAssemblyCode(); :}
+					| translation_unit external_declaration	{:	Logger.print("translation_unit ::= translation_unit external_declaration");
+						                                        SemanticImpl.getInstance().getCodeGenerator().generateFinalAssemblyCode(); :};
 
 
 external_declaration	::= function_definition	{:	Logger.print("external_declaration ::= function_definition");	:}
@@ -194,8 +196,8 @@ init_declarator	::= declarator:id EQUALS initializer:ep	{:	Variable v = new Vari
 constant_expression	::= conditional_expression;
 
 
-assignment_expression	::= conditional_expression:e											{:	Logger.print("assignment_expression ::=	conditional_expression");
-																									RESULT=e;	:}
+assignment_expression	::= conditional_expression:ep   {:	Logger.print("assignment_expression ::=	conditional_expression");
+															RESULT =ep;	:}
 						| unary_expression:id assignment_operator:op assignment_expression:e	{:	Logger.print("assignment_expression ::=	unary_expression assignment_operator assignment_expression"+id+op+e);
 																									Variable var;
 																									if (id instanceof String) {
@@ -222,7 +224,8 @@ initializer	::= LKEY initializer_list RKEY
 			| assignment_expression:ep				{:	RESULT=ep;	:};
 
 
-conditional_expression	::= logical_or_expression:ep												{:	RESULT = ep;	:}
+conditional_expression	::= logical_or_expression:ep {:	Logger.print("conditional_expression ::= logical_or_expression");
+                                                        RESULT = ep;	:}
 						| logical_or_expression INTER expression DDOT conditional_expression;
 
 
@@ -269,11 +272,12 @@ initializer_list	::= designation initializer
 					| initializer_list COMMA initializer;
 
 
-logical_or_expression	::= logical_and_expression:ep
+logical_or_expression	::= logical_and_expression:ep {: Logger.print("logical_or_expression ::= logical_and_expression");
+                                                         RESULT = ep; :}
 						| logical_or_expression:le OR_OP logical_and_expression:re;
 
 
-expression	::= assignment_expression:ep {: RESULT=ep; :}
+expression	::= assignment_expression:ep {: RESULT = ep; :}
 			| expression COMMA assignment_expression;
 
 
@@ -326,7 +330,8 @@ labeled_statement	::= IDENTIFIER DDOT statement
 
 
 expression_statement	::= SEMICOLON
-						| expression SEMICOLON;
+						| expression:ep SEMICOLON {: RESULT = ep; :}
+						;
 
 
 selection_statement	::= IF LPAREN expression RPAREN statement ELSE statement
@@ -344,7 +349,8 @@ jump_statement	::= GOTO IDENTIFIER SEMICOLON
 														RESULT=ep;	:};
 
 
-logical_and_expression	::= inclusive_or_expression
+logical_and_expression	::= inclusive_or_expression:ep {: Logger.print("logical_and_expression ::= inclusive_or_expression");
+                                                          RESULT = ep;  :}
 						| logical_and_expression:le AND_OP inclusive_or_expression;
 
 
@@ -367,8 +373,8 @@ argument_expression_list	::= assignment_expression:ep									{:	Logger.print("a
 																								/*RESULT = epl;	*/:};
 
 
-inclusive_or_expression	::= exclusive_or_expression:ep							{:	Logger.print("inclusive_or_expression ::= exclusive_or_expression");
-																					RESULT = ep;	:}
+inclusive_or_expression	::= exclusive_or_expression:ep		{:	Logger.print("inclusive_or_expression ::= exclusive_or_expression");
+																RESULT = ep;    :}
 						| inclusive_or_expression PIPE exclusive_or_expression;
 
 
@@ -385,28 +391,29 @@ string	::= STRING_LITERAL:s	{:	Logger.print("string ::= STRING_LITERAL");
 		| FUNC_NAME;
 
 
-exclusive_or_expression	::= and_expression:ep							{:	Logger.print("exclusive_or_expression ::= and_expression");
-																			RESULT = ep;	:}
+exclusive_or_expression	::= and_expression:ep	{:	Logger.print("exclusive_or_expression ::= and_expression");
+												    RESULT = ep;	:}
 						| exclusive_or_expression CARET and_expression;
 
 
-and_expression	::= equality_expression:ep					{:	Logger.print("and_expression ::= equality_expression");
-																RESULT = ep;	:}
+and_expression	::= equality_expression:ep	    {:	Logger.print("and_expression ::= equality_expression");
+												    RESULT = ep;	:}
 				| and_expression AND equality_expression;
 
 
-equality_expression	::= relational_expression:ep						{:	Logger.print("equality_expression ::= relational_expression");
-																			RESULT = ep;	:}
+equality_expression	::= relational_expression:ep	{:	Logger.print("equality_expression ::= relational_expression");
+														RESULT = ep;	:}
 					| equality_expression EQ_OP relational_expression
 					| equality_expression NE_OP relational_expression;
 
-
-relational_expression	::= shift_expression:ep							{:	Logger.print("relational_expression ::= shift_expression");
-																			RESULT = ep;	:}
-						| relational_expression LT shift_expression
-						| relational_expression GT shift_expression
-						| relational_expression LE_OP shift_expression
-						| relational_expression GE_OP shift_expression;
+// checkTestingExpression
+relational_expression	::= shift_expression:ep		{:	Logger.print("relational_expression ::= shift_expression");
+														RESULT = ep;	:}
+						| relational_expression:le LT shift_expression:re {:RESULT = SemanticImpl.getInstance().getRelationalExpression((Expression) le, "<", (Expression) re);:}
+						| relational_expression:le GT shift_expression:re {:RESULT = SemanticImpl.getInstance().getRelationalExpression((Expression) le, ">", (Expression) re);:}
+						| relational_expression:le LE_OP shift_expression:re {:RESULT = SemanticImpl.getInstance().getRelationalExpression((Expression) le, "<=", (Expression) re);:}
+						| relational_expression:le GE_OP shift_expression:re {:RESULT = SemanticImpl.getInstance().getRelationalExpression((Expression) le, ">=", (Expression) re);:}
+						;
 
 
 shift_expression	::= additive_expression:ep							{:	Logger.print("shift_expression ::= additive_expression");
